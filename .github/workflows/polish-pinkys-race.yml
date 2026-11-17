@@ -1,0 +1,50 @@
+name: Polish Pinky's ice cream race
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: curb-fighters-pinky-polish
+  cancel-in-progress: false
+
+jobs:
+  polish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: true
+
+      - name: Apply the race polish and rebuild
+        run: |
+          set -euo pipefail
+          if ! grep -q 'PINKY_RACE_POLISH_V1' source/game.js; then
+            python3 tools/apply_pinky_race_polish.py
+          else
+            echo 'Already installed; skipping the patch.'
+          fi
+          node --check source/game.js
+          python3 tools/build.py
+          test -s index.html
+          grep -q 'CF_DATA' index.html
+          grep -q 'race-instructions' index.html
+          grep -q 'PINKY_RACE_POLISH_V1' index.html
+
+      - name: Commit the game update
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add source/game.js source/index.html source/style.css index.html
+          if git diff --cached --quiet; then
+            echo 'No files changed.'
+          else
+            git commit -m "Polish Pinky's race countdown and eating animation"
+            git push origin HEAD:main
+          fi
