@@ -107,7 +107,17 @@ def pin(k, width=None, height=None):
     part = pinA.crop((sx, sy, sx + sw, sy + sh))
     if width: return threshold(nearest(part, width, width * sh / sw))
     return threshold(nearest(part, height * sw / sh, height))
-truck = [pin(0, width=246), pin(1, width=246 * pinky[1][2] / pinky[0][2])]  # one scale for both frames
+# New 2:1 isometric van artwork. Both top frames share the same crop and
+# only the window interior changes, avoiding a van-wide animation jump.
+iso = load('pinky-van-iso.png')
+van_drive = iso.crop((32, 65, 615, 580))
+van_serving_art = iso.crop((660, 65, 1243, 580))
+van_serving = van_drive.copy()
+# Serving-window panel and Pinky; preserve every other pixel from the driving frame.
+window = (112, 205, 337, 422)
+van_serving.paste(van_serving_art.crop(window), window[:2])
+truck = [threshold(nearest(frame, 246, 246 * frame.height / frame.width))
+         for frame in (van_drive, van_serving)]
 vendor = pin(2, height=75)
 cone = pin(3, height=49)
 plA = load('riverbank-sprites.png')

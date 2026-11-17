@@ -1,0 +1,18 @@
+PINKY VAN UPDATE — Curb Fighters
+
+Includes revised driving, serving and side-on van artwork, updated asset-generation scripts,
+rebuilt sprite assets and an already-built playable index.html.
+
+To install:
+1. Back up your existing local curb-fighters GitHub repository folder (or use a new branch).
+2. Unzip this archive, and copy its CONTENTS into the root of your existing local
+   curb-fighters repository. Keep the nested folder structure. Choose Replace when prompted.
+3. Check changes in GitHub Desktop and commit them.
+4. Push the commit to GitHub. The deployment workflow is manual, so this does NOT publish immediately.
+5. Run the Publish Curb Fighters to GoDaddy workflow when you're ready.
+
+Do not replace .github/ workflows. No game rules or source/game.js have been changed.
+
+Note: Updated vans are intentionally identical outside the serving-window rectangle.
+The image was regenerated and the standalone index.html built successfully. An automated
+browser smoke test could not complete in this environment due browser sandbox restrictions.

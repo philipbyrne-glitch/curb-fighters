@@ -57,19 +57,24 @@ def match_offset(small, big):
             if best is None or score < best[0]: best = (score, dx * 4, dy * 4)
     return best[1], best[2]
 
-f0, f1 = crop(0), crop(1)
-ox, oy = match_offset(f0, f1)
-import sys; sys.path.insert(0, str(ROOT / 'tools'))
-# Pinky's van is used exactly as drawn. Shearing it and re-projecting it in 3D were both tried and
-# rejected (they warp the art); new van art at the street's angle is the real fix (docs/VAN-ART-BRIEF.md).
-S0 = 246 / f0.width
-anchors = [[round(f0.width * S0 / 2), round(f0.height * S0 - 12)], [round((f0.width / 2 + ox) * S0), round((f0.height + oy) * S0 - 12)]]
-exhaust = [round((24 - f0.width / 2) * S0), round((350 - f0.height) * S0 + 12)]     # the rear bumper, from the anchor
-# Front-on scenes: the serving frame as drawn, at the race's 2px-per-art-pixel scale.
-RS = .47                     # sized so Pinky's bubble clears the race titles above the roof
-side = Image.fromarray(threshold(np.array(nearest(f1, f1.width * RS, f1.height * RS))))
-bb = side.getbbox(); side = side.crop(bb)
-pinky_face = [round(232 * RS) - bb[0], round(150 * RS) - bb[1]]
+# Rebuilt van frames are already at identical pixel bounds in the atlas.
+# Anchors keep both frames on exactly the same ground position.
+van = Image.open(G + 'pinky.png').convert('RGBA')
+van_rects = meta['props']['pinky']
+f0 = van.crop((van_rects[0][0], van_rects[0][1], van_rects[0][0] + van_rects[0][2], van_rects[0][1] + van_rects[0][3]))
+f1 = van.crop((van_rects[1][0], van_rects[1][1], van_rects[1][0] + van_rects[1][2], van_rects[1][1] + van_rects[1][3]))
+anchors = [[f0.width // 2, f0.height - 12], [f1.width // 2, f1.height - 12]]
+exhaust = [-int(f0.width * .46), -int(f0.height * .22)]
+
+# The independent side profile is used in the race and celebration scenes.
+iso = Image.open(A + 'pinky-van-iso.png').convert('RGBA')
+side_frame = iso.crop((225, 655, 1055, 1225))
+side = Image.fromarray(threshold(np.array(nearest(side_frame, 299, 205))))
+bb = side.getbbox()
+side = side.crop(bb)
+# Face is at roughly (615, 900) in the source image.
+pinky_face = [round((615 - 225) * 299 / 830) - bb[0],
+              round((905 - 655) * 205 / 570) - bb[1]]
 
 # ---------------------------------------------------------------- heads
 CUT = [64, 63, 65, 67]   # chin/neck row of each neutral pose (Phil, Shay, Rose, Kim)
@@ -312,4 +317,4 @@ json.dump(meta, open(G + 'meta.json', 'w'))
 # Palette-quantise the atlases the page embeds (lossless-looking, a fraction of the size).
 for name in ['actors', 'pinky', 'cars', 'plants', 'collector', 'heads', 'eat', 'van_side', 'trophy']:
     Image.open(G + name + '.png').convert('RGBA').quantize(colors=256, method=Image.Quantize.FASTOCTREE, dither=Image.Dither.NONE).save(G + name + '_q.png', optimize=True)
-print('heads', len(heads), 'eat', eat_meta, '\nanchors', anchors, 'exhaust', exhaust, 'frame offset', (ox, oy), '\ncone', CW_, CH_, 'side', side.size, 'face', pinky_face)
+print('heads', len(heads), 'eat', eat_meta, '\nanchors', anchors, 'exhaust', exhaust, '\ncone', CW_, CH_, 'side', side.size, 'face', pinky_face)
