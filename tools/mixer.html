@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Curb Fighters Sound Desk</title>
+<style>
+/*FONTS*/
+:root {
+  --night: #18254e; --panel: #252c67; --edge: #8178ce; --shadow: #121735; --gold: #ffe16a; --cream: #fff4d2;
+  --muted: #c5c9f2; --berry: #ad3876; --track: #41476d;
+  --arcade: 'CF Arcade', 'Press Start 2P', monospace; --pixel: 'CF Pixel', 'VT323', monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --night: #18254e; --cream: #fff4d2; } }
+:root[data-theme="dark"] { --night: #18254e; --cream: #fff4d2; }
+* { box-sizing: border-box; }
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+body { margin: 0; background: var(--night); color: var(--cream); font: 20px/1.25 var(--pixel); }
+main { max-width: 980px; margin: 0 auto; padding: 18px 14px 60px; }
+h1 { margin: 6px 0 4px; font: clamp(14px, 3.4vw, 22px)/1.4 var(--arcade); color: var(--gold); text-shadow: 3px 3px 0 var(--berry); }
+.lede { margin: 0 0 16px; color: var(--muted); max-width: 62ch; }
+h2 { margin: 0 0 10px; font: 11px/1.4 var(--arcade); color: var(--gold); }
+.card { background: var(--panel); border: 2px solid var(--edge); box-shadow: 3px 3px 0 var(--shadow); padding: 14px; margin-bottom: 16px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px 18px; }
+.row { display: grid; grid-template-columns: 44px 1fr; grid-template-rows: auto auto; column-gap: 10px; align-items: center; padding: 6px 0; border-bottom: 1px dashed #3b4383; }
+.row .name { grid-column: 2; display: flex; justify-content: space-between; gap: 8px; }
+.row .name b { font-weight: 400; color: var(--cream); }
+.row .name output { color: var(--gold); white-space: nowrap; }
+.row input { grid-column: 2; }
+.play { grid-row: 1 / span 2; width: 44px; height: 44px; border: 2px solid var(--gold); background: none; color: var(--gold); font: 12px var(--arcade); box-shadow: 2px 2px 0 var(--shadow); cursor: pointer; }
+.play.on { background: var(--gold); color: var(--panel); }
+.play:active { translate: 0 2px; }
+input[type=range] { width: 100%; height: 30px; margin: 0; background: none; -webkit-appearance: none; appearance: none; touch-action: pan-y; cursor: pointer; }
+input[type=range]::-webkit-slider-runnable-track { height: 8px; background: var(--track); border: 2px solid var(--edge); }
+input[type=range]::-moz-range-track { height: 4px; background: var(--track); border: 2px solid var(--edge); }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 22px; margin-top: -9px; background: var(--gold); border: 2px solid var(--shadow); border-radius: 0; }
+input[type=range]::-moz-range-thumb { width: 10px; height: 18px; background: var(--gold); border: 2px solid var(--shadow); border-radius: 0; }
+.scenes { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn { min-height: 44px; padding: 8px 12px; border: 2px solid var(--gold); background: none; color: var(--gold); font: 9px/1.4 var(--arcade); box-shadow: 2px 2px 0 var(--shadow); cursor: pointer; }
+.btn.solid, .btn.on { background: var(--gold); color: var(--panel); }
+.btn:active { translate: 0 2px; }
+.btn.stop { border-color: #ff9aa8; color: #ff9aa8; }
+.bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 12px; }
+textarea { width: 100%; min-height: 120px; margin-top: 10px; padding: 10px; background: #10183a; color: var(--cream); border: 2px solid var(--edge); font: 16px/1.3 ui-monospace, Menlo, monospace; resize: vertical; }
+.note { color: var(--muted); margin: 8px 0 0; }
+.np { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; }
+.np .tracks { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
+.np .row { border-bottom: 0; }
+@media (max-width: 640px) {
+  .np { padding: 10px; }
+  .np .tracks { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 6px; scrollbar-width: thin; }
+  .np .tracks .btn { flex: none; min-height: 40px; padding: 6px 10px; font-size: 8px; }
+}
+.gate { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; background: #0c1230e6; padding: 20px; text-align: center; }
+.gate[hidden] { display: none; }
+.gate div { max-width: 420px; }
+.gate p { color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="gate" id="gate"><div><h1>SOUND DESK</h1><p>Tap to switch the sound on, then play each sound and set how loud it should be next to the others.</p><button class="btn solid" id="start" type="button">SWITCH SOUND ON</button></div></div>
+<main>
+  <h1>CURB FIGHTERS · SOUND DESK</h1>
+  <p class="lede">A temporary tool. Play each sound, set its level, and use the scenes to hear them together the way they happen in a match. It starts from the levels the game uses today. When it feels right, copy the settings and send them over.</p>
+
+  <section class="card np" aria-label="Music underneath"><h2>MUSIC UNDERNEATH</h2>
+    <div class="tracks" id="np-tracks"></div>
+    <div id="np-level"></div>
+  </section>
+
+  <section class="card"><h2>PLAYER VOLUME DEFAULTS</h2>
+    <p class="note">The starting positions of the Music and SFX sliders a new player sees.</p>
+    <div class="grid" id="buses"></div>
+  </section>
+
+  <section class="card"><h2>HEAR THEM TOGETHER</h2>
+    <div class="scenes" id="scenes"></div>
+    <p class="note">Scenes play over whatever music you've chosen above. With no music on, each brings its own track.</p>
+    <div class="bar"><button class="btn stop" id="stop" type="button">■ STOP SOUNDS</button></div>
+  </section>
+
+  <div id="groups"></div>
+
+  <section class="card"><h2>YOUR SETTINGS</h2>
+    <p class="note">Saved on this device as you go. Copy them and paste them back into the chat to make them the game’s defaults.</p>
+    <textarea id="out" readonly aria-label="Sound settings"></textarea>
+    <div class="bar"><button class="btn solid" id="copy" type="button">COPY SETTINGS</button><button class="btn" id="reset" type="button">BACK TO THE GAME’S LEVELS</button><span class="note" id="copied" aria-live="polite"></span></div>
+  </section>
+</main>
+<!--AUDIO-->
+<script>
+'use strict';
+const clamp = (v, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, v));
+const PORTRAIT = { matches: false };
+/*SOUND*/
+
+// ------------------------------------------------------------------ what can be balanced
+const GROUPS = [
+  { title: 'MUSIC', items: [
+    ['intro', 'Title theme', { music: 'intro' }], ['select', 'Choose Your Champion', { music: 'select' }], ['game', 'In the street', { music: 'game' }],
+    ['pinky', 'Pinky’s tune', { music: 'pinky' }], ['win', 'Victory theme', { music: 'win' }] ] },
+  { title: 'VOICES AND RECORDINGS', items: [
+    ['voice-phil', '“Phil!”', { say: 1 }], ['voice-kim', '“Kim!”', { say: 1 }], ['voice-rose', '“Rose!”', { say: 1 }], ['voice-shay', '“Shay!”', { say: 1 }],
+    ['voice-bounce', '“Let’s bounce!”', { say: 1 }], ['voice-versus', '“Versus”', { say: 1 }], ['voice-pinkys', '“Pinky’s!” chant', { say: 1 }], ['voice-noodles', '“NOODLES!” shout', { say: 1 }], ['sfx-miss', 'Missed shot', { say: 1 }] ] },
+  { title: 'GAME SOUNDS', items: [
+    ['throw', 'Throw', { fx: [false] }], ['curb', 'Curb hit', { fx: [] }], ['bounce', 'Ball bounce', { fx: [] }], ['bop', 'Practice bounce', { fx: [] }],
+    ['catch', 'Catch', { fx: [] }], ['hit', 'Score jingle', { fx: [] }], ['double', 'Double Trouble jingle', { fx: [] }], ['fanfare', 'Win fanfare', { fx: [] }],
+    ['noodle', 'NOODLES! buzz', { fx: [true] }], ['surprise', '“Wait, do you hear…”', { fx: [] }], ['horn', 'Car horn', { fx: [] }],
+    ['car', 'Car driving past', { engine: 9000 }], ['van', 'Pinky’s van arriving', { engine: 4200 }], ['screech', 'Tyre screech', { fx: [] }],
+    ['raceAway', 'Getaway engine', { fx: [] }], ['munch', 'Munch', { seq: [[0, 0], [130, 1], [260, 0], [390, 1]] }],
+    ['countdown', 'Countdown', { seq: [[0, 3], [700, 2], [1400, 1], [2100, 0]] }], ['go', 'LET’S BOUNCE! jingle', { fx: [] }],
+    ['tick', 'Menu tick', { seq: [[0, 0], [200, 1], [400, 2]] }], ['lock', 'Meter lock', { seq: [[0, 0], [400, 1]] }] ] },
+];
+const munch = Array.from({ length: 22 }, (_, k) => [3000 + k * 140, 'fx', 'munch', k % 2, k]);
+const SCENES = [
+  ['A curb hit', 'game', [[0, 'fx', 'throw', false], [1480, 'fx', 'curb'], [1480, 'fx', 'hit'], [2550, 'fx', 'bounce']]],
+  ['A stinker', 'game', [[0, 'fx', 'throw', false], [1480, 'fx', 'bounce'], [1480, 'say', 'sfx-miss']]],
+  ['Halfway hit and catch', 'game', [[400, 'fx', 'bop'], [1200, 'fx', 'bop'], [2000, 'fx', 'bop'], [2500, 'fx', 'throw', true], [3025, 'fx', 'curb'], [3025, 'fx', 'hit'], [3740, 'fx', 'catch']]],
+  ['Double Trouble', 'game', [[0, 'fx', 'throw', false], [2109, 'fx', 'curb'], [2109, 'fx', 'hit'], [3700, 'fx', 'curb'], [3700, 'fx', 'double']]],
+  ['NOODLES!', 'game', [[0, 'say', 'voice-noodles'], [0, 'fx', 'noodle', true]]],
+  ['A car drives past', 'game', [[0, 'fx', 'horn'], [0, 'engine', 'car', 9000]]],
+  ['Pinky arrives', 'pinky', [[0, 'fx', 'surprise'], [3000, 'engine', 'van', 4200], [6276, 'say', 'voice-pinkys']]],
+  ['The ice cream race', 'pinky', [[0, 'fx', 'countdown', 3], [1000, 'fx', 'countdown', 2], [2000, 'fx', 'countdown', 1], [3000, 'fx', 'countdown', 0], ...munch]],
+  ['Pinky tears off', null, [[0, 'fx', 'screech'], [0, 'fx', 'raceAway'], [950, 'say', 'voice-pinkys']]],
+  ['Champions chosen', 'select', [[0, 'say', 'voice-bounce'], [1650, 'say', 'voice-rose'], [2600, 'say', 'voice-versus'], [3900, 'say', 'voice-phil']]],
+  ['The winning hit', 'win', [[0, 'fx', 'fanfare']]],
+];
+
+// ------------------------------------------------------------------ state
+const STORE = 'curb-fighters-desk';
+let saved = {}; try { saved = JSON.parse(localStorage.getItem(STORE) || '{}'); } catch { saved = {}; }
+const BAKED = Object.assign({}, Sound.levels);          // the levels the game ships with
+const levels = Object.assign({}, BAKED, saved.levels || {});
+for (const [k, v] of Object.entries(levels)) Sound.setLevel(k, v);
+if (Number.isFinite(saved.music)) Sound.set('music', saved.music);
+if (Number.isFinite(saved.sfx)) Sound.set('sfx', saved.sfx);
+let timers = [], engines = [], playingMusic = null;
+const $ = (s) => document.querySelector(s);
+function persist() {
+  const data = { music: +Sound.prefs.music.toFixed(2), sfx: +Sound.prefs.sfx.toFixed(2), levels: {} };
+  for (const g of GROUPS) for (const [k] of g.items) data.levels[k] = +(levels[k] ?? 1).toFixed(2);
+  try { localStorage.setItem(STORE, JSON.stringify({ music: data.music, sfx: data.sfx, levels })); } catch { /* private mode */ }
+  $('#out').value = JSON.stringify(data, null, 1);
+}
+const db = (v) => v <= 0 ? 'OFF' : (v === 1 ? '0 dB' : (20 * Math.log10(v) > 0 ? '+' : '') + (20 * Math.log10(v)).toFixed(1) + ' dB');
+
+// ------------------------------------------------------------------ playing things
+function stopSounds() { // effects, voices on timers and engines; the music carries on
+  timers.forEach(clearTimeout); timers = []; engines.forEach(clearInterval); engines = [];
+  document.querySelectorAll('.scenes .btn.on').forEach((b) => b.classList.remove('on'));
+}
+function stopMusic() { Sound.music(null); playingMusic = null; syncMusicButtons(); }
+function runEngine(kind, ms) {
+  const t0 = performance.now(), id = setInterval(() => {
+    const el = performance.now() - t0; if (el > ms) { clearInterval(id); return; }
+    Sound.engine(kind, Math.min(1, el / ms), el);
+  }, 90);
+  engines.push(id);
+}
+function playMusic(key) { Sound.music(key); playingMusic = key; syncMusicButtons(); }
+const TRACKS = GROUPS[0].items.map(([k, label]) => [k, label]);
+function syncMusicButtons() {
+  document.querySelectorAll('.play[data-music]').forEach((b) => { const on = b.dataset.music === playingMusic; b.classList.toggle('on', on); b.textContent = on ? '■' : '▶'; b.setAttribute('aria-label', (on ? 'Stop ' : 'Play ') + b.dataset.label); });
+  document.querySelectorAll('#np-tracks .btn').forEach((b) => { const on = (b.dataset.track || null) === playingMusic; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
+  // the bar's slider follows the track that's playing
+  const key = playingMusic, wrap = $('#np-level'); wrap.innerHTML = '';
+  if (!key) return;
+  const label = TRACKS.find(([k]) => k === key)[1];
+  const s = slider('np-lvl', label + ' level', levels[key] ?? 1, (v) => { levels[key] = v; Sound.setLevel(key, v); sliders[key].input.value = Math.round(v * 100); sliders[key].show(); }, null);
+  s.row.style.gridTemplateColumns = '1fr'; s.row.querySelector('.name').style.gridColumn = '1'; s.input.style.gridColumn = '1';
+  wrap.append(s.row);
+}
+function play(key, how) {
+  Sound.unlock();
+  if (how.music) { if (playingMusic === how.music) { Sound.music(null); playingMusic = null; syncMusicButtons(); } else playMusic(how.music); return; }
+  if (how.say) { Sound.say(key); return; }
+  if (how.engine) { runEngine(key, how.engine); return; }
+  if (how.seq) { how.seq.forEach(([at, arg]) => timers.push(setTimeout(() => Sound.sfx(key, arg, arg), at))); return; }
+  Sound.sfx(key, ...(how.fx || []));
+}
+function scene(name, music, events, btn) {
+  stopSounds(); Sound.unlock(); btn.classList.add('on');
+  if (!playingMusic && music) playMusic(music); // keep the music you chose; otherwise bring the scene's own
+  let end = 0;
+  for (const [at, kind, key, ...args] of events) {
+    end = Math.max(end, at + (kind === 'engine' ? args[0] : 1500));
+    timers.push(setTimeout(() => { kind === 'fx' ? Sound.sfx(key, ...args) : kind === 'say' ? Sound.say(key) : runEngine(key, args[0]); }, at));
+  }
+  timers.push(setTimeout(() => btn.classList.remove('on'), end + 1500));
+}
+
+// ------------------------------------------------------------------ building the desk
+function slider(id, label, value, onInput, play) {
+  const row = document.createElement('div'); row.className = 'row';
+  const pct = Math.round(value * 100);
+  row.innerHTML = '<button class="play" type="button">▶</button><label class="name" for="' + id + '"><b></b><output></output></label><input type="range" min="0" max="200" step="5">';
+  const btn = row.querySelector('.play'), out = row.querySelector('output'), input = row.querySelector('input');
+  row.querySelector('b').textContent = label; input.id = id; input.value = pct; input.setAttribute('aria-label', label + ' level');
+  const show = () => { const v = Number(input.value) / 100; out.textContent = input.value + '% · ' + db(v); };
+  show();
+  input.addEventListener('input', () => { show(); onInput(Number(input.value) / 100); persist(); });
+  if (play) { btn.setAttribute('aria-label', 'Play ' + label); btn.addEventListener('click', play); } else btn.remove();
+  return { row, btn, input, show };
+}
+const buses = $('#buses');
+for (const kind of ['music', 'sfx']) {
+  const s = slider('bus-' + kind, kind === 'music' ? 'Music slider starts at' : 'SFX slider starts at', Sound.prefs[kind], (v) => Sound.set(kind, Math.min(1, v)), null);
+  s.input.max = 100; s.input.step = 1; s.input.value = Math.round(Sound.prefs[kind] * 100); s.show(); s.row.style.gridTemplateColumns = '1fr'; s.row.querySelector('.name').style.gridColumn = '1'; s.input.style.gridColumn = '1';
+  buses.append(s.row);
+}
+const groupsEl = $('#groups');
+const sliders = {};
+for (const g of GROUPS) {
+  const card = document.createElement('section'); card.className = 'card';
+  card.innerHTML = '<h2></h2><div class="grid"></div>'; card.querySelector('h2').textContent = g.title;
+  for (const [key, label, how] of g.items) {
+    const s = slider('lvl-' + key, label, levels[key] ?? 1, (v) => { levels[key] = v; Sound.setLevel(key, v); if (key === playingMusic) { const n = $('#np-lvl'); if (n) { n.value = Math.round(v * 100); n.dispatchEvent(new Event('change')); } } }, () => play(key, how));
+    if (how.music) { s.btn.dataset.music = how.music; s.btn.dataset.label = label; }
+    sliders[key] = s; card.querySelector('.grid').append(s.row);
+  }
+  groupsEl.append(card);
+}
+const scenesEl = $('#scenes');
+for (const [name, music, events] of SCENES) {
+  const b = document.createElement('button'); b.className = 'btn'; b.type = 'button'; b.textContent = name.toUpperCase();
+  b.addEventListener('click', () => scene(name, music, events, b)); scenesEl.append(b);
+}
+$('#stop').addEventListener('click', stopSounds);
+const npTracks = $('#np-tracks');
+for (const [key, label] of [...TRACKS, [null, '■ NO MUSIC']]) {
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'btn' + (key ? '' : ' stop'); b.textContent = key ? label.toUpperCase() : label;
+  if (key) b.dataset.track = key;
+  b.addEventListener('click', () => { Sound.unlock(); key ? playMusic(key) : stopMusic(); });
+  npTracks.append(b);
+}
+$('#reset').addEventListener('click', () => {
+  for (const k of Object.keys(sliders)) { const v = BAKED[k] ?? 1; levels[k] = v; Sound.setLevel(k, v); sliders[k].input.value = Math.round(v * 100); sliders[k].show(); }
+  persist();
+});
+$('#copy').addEventListener('click', async () => {
+  const text = $('#out').value;
+  try { await navigator.clipboard.writeText(text); $('#copied').textContent = 'Copied. Paste it into the chat.'; }
+  catch { $('#out').select(); $('#copied').textContent = 'Selected: copy it with your device’s copy command.'; }
+});
+$('#start').addEventListener('click', () => { Sound.init(); Sound.unlock(); $('#gate').hidden = true; });
+Sound.init();
+['intro', 'select', 'game', 'pinky', 'win', 'voice-phil', 'voice-kim', 'voice-rose', 'voice-shay', 'voice-bounce', 'voice-versus', 'voice-pinkys', 'voice-noodles', 'sfx-miss'].forEach((k) => Sound.decode(k));
+document.addEventListener('visibilitychange', () => { if (document.hidden) Sound.suspend(); else Sound.resume(); });
+persist(); syncMusicButtons();
+window.SoundDesk = { Sound, levels };
+</script>
+</body>
+</html>
