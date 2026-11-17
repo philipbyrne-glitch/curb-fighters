@@ -1,0 +1,70 @@
+name: Publish Curb Fighters to GoDaddy
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: curb-fighters-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out game source
+        uses: actions/checkout@v4
+
+      - name: Build standalone HTML
+        run: |
+          set -euo pipefail
+          python3 tools/build.py
+          test -s index.html
+          grep -q 'CF_DATA' index.html
+
+      - name: Unlock deployment SSH key
+        env:
+          DEPLOY_KEY: ${{ secrets.GODADDY_DEPLOY }}
+          DEPLOY_PASSPHRASE: ${{ secrets.GODADDY_SSH_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.ssh"
+          chmod 700 "$HOME/.ssh"
+          printf '%s\n' "$DEPLOY_KEY" > "$HOME/.ssh/deploy_key"
+          chmod 600 "$HOME/.ssh/deploy_key"
+          eval "$(ssh-agent -s)"
+          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
+          echo "SSH_AGENT_PID=$SSH_AGENT_PID" >> "$GITHUB_ENV"
+          cat > "$RUNNER_TEMP/askpass.sh" <<'EOF'
+          #!/bin/sh
+          printf '%s\n' "$DEPLOY_PASSPHRASE"
+          EOF
+          chmod 700 "$RUNNER_TEMP/askpass.sh"
+          export SSH_ASKPASS="$RUNNER_TEMP/askpass.sh"
+          export SSH_ASKPASS_REQUIRE=force
+          export DISPLAY=:0
+          setsid ssh-add "$HOME/.ssh/deploy_key" < /dev/null
+          rm -f "$RUNNER_TEMP/askpass.sh" "$HOME/.ssh/deploy_key"
+
+      - name: Back up current live page
+        run: |
+          set -euo pipefail
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15 -p 22 \
+            qbifp9pmtlju@92.205.11.109 \
+            'set -eu; cd "$HOME/public_html/curbs/curb-fighters"; test -f index.html; cp -p index.html "index.html.backup-$(date +%Y%m%d-%H%M%S)"'
+
+      - name: Upload new page to temporary name
+        run: |
+          set -euo pipefail
+          scp -o BatchMode=yes -o StrictHostKeyChecking=yes -P 22 \
+            index.html qbifp9pmtlju@92.205.11.109:public_html/curbs/curb-fighters/index.html.uploading
+
+      - name: Publish the new page atomically
+        run: |
+          set -euo pipefail
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -p 22 \
+            qbifp9pmtlju@92.205.11.109 \
+            'set -eu; cd "$HOME/public_html/curbs/curb-fighters"; test -s index.html.uploading; mv -f index.html.uploading index.html; echo "Published index.html"'
