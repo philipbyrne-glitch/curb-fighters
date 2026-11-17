@@ -27,7 +27,7 @@ if missing: raise SystemExit('assets/built/meta.json is missing %s: run tools/pr
 data = '<script>window.CF_DATA=' + json.dumps({'img': img, 'meta': meta}, separators=(',', ':')) + ';</script>\n'
 # Music and voices; the optional ones (win theme, names, chants) are embedded once they exist,
 # and until then the game plays its synth stand-ins.
-for key in ['intro', 'select', 'game', 'pinky', 'win', 'voice-phil', 'voice-kim', 'voice-rose', 'voice-shay', 'voice-pinkys', 'voice-noodles', 'sfx-miss', 'sfx-family-beep', 'voice-bounce', 'voice-versus']:
+for key in ['intro', 'select', 'game', 'pinky', 'win', 'voice-phil', 'voice-kim', 'voice-rose', 'voice-shay', 'voice-pinkys', 'voice-noodles', 'sfx-miss', 'sfx-family-beep', 'voice-bounce', 'voice-versus', 'voice-wins', 'voice-double-trouble']:
     if os.path.exists(GEN + key + '.mp3'):
         data += '<script type="text/plain" id="aud-%s">%s</script>\n' % (key, b64(GEN + key + '.mp3'))
 icons = ('<link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,%s">\n'

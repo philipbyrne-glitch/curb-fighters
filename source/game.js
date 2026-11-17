@@ -751,7 +751,9 @@ function onFlightEnd(s) {
     s.bigCheer = true;
     addPoints(20, true);
     if (G.victor !== null) $('#winner-sub').textContent = 'DOUBLE TROUBLE! +30'; // one message, not two banners
-    else { showBanner('DOUBLE<br>TROUBLE!', '<b>+30</b>', 'double', 2600); Sound.sfx('double'); }
+    else showBanner('DOUBLE<br>TROUBLE!', '<b>+30</b>', 'double', 2600);
+    // Use the recorded announcement at the reveal, even when it also wins the match.
+    if (!Sound.say('voice-double-trouble', 'double-trouble')) Sound.sfx('double');
   } else if (o.points && s.halfway) { G.caught = true; G.ball = null; Sound.sfx('catch'); }
   else { Sound.sfx('bounce'); }
   if (G.ball) { G.ball.z = surfaceZ(G.ball.y) + BALL_Z; G.rest = G.ball; G.ball = null; }
@@ -772,6 +774,12 @@ function beginVictory(p) {
   $('#winner-name').textContent = G.names[p] + ' WINS!'; $('#winner-sub').textContent = 'STREET CHAMPION';
   $('#winner').hidden = false;
   Sound.sfx('fanfare');
+  // Spoken win cue: champion's recorded name, then WINS!
+  Sound.say('voice-' + G.names[p].toLowerCase(), 'victory-name');
+  const winningName = G.names[p];
+  setTimeout(() => {
+    if (G.match.winner === p && G.names[p] === winningName) Sound.say('voice-wins', 'victory-wins');
+  }, 950);
 }
 
 /* =====================================================================
@@ -1545,7 +1553,7 @@ function setScreen(name) {
   G.screen = name; if (G.soundOpen) openSound(false);
   for (const id of ['boot', 'select', 'game', 'celebrate']) $('#' + id).hidden = name !== id;
   if (name === 'select') { resetSelect(); sizeSelect(); Sound.decode('game'); ['phil', 'kim', 'rose', 'shay', 'bounce', 'versus'].forEach((n) => Sound.decode('voice-' + n)); }
-  if (name === 'game') { ['pinky', 'win', 'voice-noodles', 'voice-pinkys'].forEach((k) => Sound.decode(k)); hud(); }
+  if (name === 'game') { ['pinky', 'win', 'voice-noodles', 'voice-pinkys', 'voice-wins', 'voice-double-trouble'].forEach((k) => Sound.decode(k)); hud(); }
 }
 function desiredMusic() {
   if (G.screen === 'boot') return 'intro';
