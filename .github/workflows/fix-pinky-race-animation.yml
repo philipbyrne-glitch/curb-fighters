@@ -1,0 +1,44 @@
+name: Fix Pinky's eating animation
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: curb-fighters-pinky-race-fix
+  cancel-in-progress: false
+
+jobs:
+  fix-race-animation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: true
+
+      - name: Apply animation fix and rebuild
+        run: |
+          set -euo pipefail
+          python3 tools/apply_pinky_race_animation_fix.py
+          node --check source/game.js
+          python3 tools/build.py
+          test -s index.html
+          grep -q 'PINKY_RACE_ANIMATION_FIX_V1' source/game.js
+
+      - name: Commit the fix
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add source/game.js index.html
+          if git diff --cached --quiet; then
+            echo 'No files changed.'
+          else
+            git commit -m "Fix Pinky's eating mouth placement and neck seam"
+            git push origin HEAD:main
+          fi
