@@ -1,0 +1,54 @@
+
+name: Test GoDaddy SSH
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-connection:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Install SSH tools
+        run: sudo apt-get update && sudo apt-get install -y sshpass
+
+      - name: Configure SSH key
+        env:
+          SSH_KEY: ${{ secrets.GODADDY_DEPLOY }}
+          SSH_PASSPHRASE: ${{ secrets.GODADDY_SSH_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+          eval "$(ssh-agent -s)"
+          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
+          echo "SSH_AGENT_PID=$SSH_AGENT_PID" >> "$GITHUB_ENV"
+
+          cat > /tmp/ssh-askpass <<'EOF'
+          #!/bin/sh
+          printf '%s\n' "$SSH_PASSPHRASE"
+          EOF
+          chmod 700 /tmp/ssh-askpass
+
+          export SSH_ASKPASS=/tmp/ssh-askpass
+          export SSH_ASKPASS_REQUIRE=force
+          export DISPLAY=:0
+          setsid ssh-add ~/.ssh/deploy_key < /dev/null
+
+          rm -f /tmp/ssh-askpass ~/.ssh/deploy_key
+
+      - name: Test GoDaddy connection
+        run: |
+          ssh -p 22 \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=accept-new \
+            -o ConnectTimeout=15 \
+            qbifp9pmtlju@92.205.11.109 \
+            'echo "SSH connection successful"; pwd; test -d "$HOME/public_html/curbs/curb-fighters" && echo "Website folder found"'
