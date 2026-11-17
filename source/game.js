@@ -96,7 +96,7 @@ const Sound = (() => {
   // Phil's balance from the sound desk (tools/mixer.html). 1 = as designed; anything unlisted is 1.
   const MIX = {
     intro: 0.2, select: 0.2, game: 0.2, pinky: 0.2, win: 0.2,
-    'voice-phil': 0.4, 'voice-kim': 0.4, 'voice-rose': 0.4, 'voice-shay': 0.4, 'voice-bounce': 0.4, 'voice-versus': 0.4, 'voice-pinkys': 0.4, 'voice-noodles': 0.4, 'sfx-miss': 0.35,
+    'voice-phil': 0.4, 'voice-kim': 0.4, 'voice-rose': 0.4, 'voice-shay': 0.4, 'voice-bounce': 0.4, 'voice-versus': 0.4, 'voice-pinkys': 0.4, 'voice-noodles': 0.4, 'sfx-miss': 0.35, 'sfx-family-beep': 0.3,
     throw: 2, curb: 1.65, bounce: 2, bop: 2, catch: 1.9, hit: 1.25, double: 1.25, fanfare: 1.25, noodle: 2, surprise: 1.15, horn: 1.45, car: 1.25, van: 1.9, screech: 1, raceAway: 1.55, munch: 2, countdown: 1.75, go: 1.3, tick: 1, lock: 1,
   };
   const level = (name) => (MIX[name] ?? 1);
@@ -382,7 +382,11 @@ const blit = (c, img, r, x, y, w, h) => c.drawImage(img, r[0], r[1], r[2], r[3],
 function drawCar(c, x, y, towards, left, color, zoom) {
   // Frame 0 is the front (driving towards us, down-right); frame 1 the back (away, up-right). Mirror for leftward.
   const r = PR.cars[color * 2 + (towards ? 0 : 1)], w = Math.round(r[2] * zoom), h = Math.round(r[3] * zoom);
-  c.save(); c.translate(Math.round(x), Math.round(y)); if (left) c.scale(-1, 1); blit(c, IMG.cars, r, -Math.round(w / 2), -h + Math.round(9 * zoom), w, h); c.restore();
+  // Personal cars: swap wheel-spoke positions every 110 ms. Generic traffic stays unchanged.
+  const spin = color >= 2 && Math.floor((G.clock - G.carStart) / 110) % 2 === 1;
+  const atlas = spin && IMG.carsSpin ? IMG.carsSpin : IMG.cars;
+  const frame = spin && PR.carsSpin ? PR.carsSpin[color * 2 + (towards ? 0 : 1)] : r;
+  c.save(); c.translate(Math.round(x), Math.round(y)); if (left) c.scale(-1, 1); blit(c, atlas, frame, -Math.round(w / 2), -h + Math.round(9 * zoom), w, h); c.restore();
 }
 function drawCollector(c, x, y, picking, time, zoom, reverse) {
   const r = PR.collector[picking ? 2 + Math.floor(time / 650) % 2 : Math.floor(time / 260) % 2], w = Math.round(r[2] * zoom), h = Math.round(r[3] * zoom);
@@ -869,7 +873,7 @@ function beginTraffic() {
   if (!G.avatars.includes(3)) trafficCars.push(3); // Kim
   G.carColor = trafficCars[Math.floor(Math.random() * trafficCars.length)];
   G.waitVariants = [Math.floor(Math.random() * 4), Math.floor(Math.random() * 2), Math.floor(Math.random() * 2), Math.floor(Math.random() * 2)];
-  G.phase = 'traffic'; G.engineAt = 0;
+  G.phase = 'traffic'; G.engineAt = 0; G.carBeeped = false;
   showBanner('CAR!', 'EVERYONE ON THE PAVEMENT', '', 1900);
   Sound.sfx('horn'); hud();
 }
@@ -1144,6 +1148,11 @@ function updateEngine() {
   if ((!van && !car) || G.clock < G.engineAt) return;
   G.engineAt = G.clock + 90;
   const el = van ? G.clock - pk.stageStart : G.clock - G.carStart, u = clamp(el / (van ? PD[pk.stage] : CAR_MS));
+  // Only Phil's VW and Kim's Qashqai use the recorded two-beep sample, once near the players.
+  if (car && G.carColor >= 2 && !G.carBeeped && u >= .46) {
+    G.carBeeped = true;
+    Sound.say('sfx-family-beep', 'family-car-horn');
+  }
   Sound.engine(van ? 'van' : 'car', u, el);
 }
 function update(dt) {

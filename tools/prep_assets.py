@@ -150,6 +150,8 @@ def strip(name, imgs):
     s.save(G + name + '.png', optimize=True)
     props[name] = rects
 strip('cars', car_imgs)
+# The car wheel spin atlas is generated after the standard car atlas + metadata.
+
 strip('collector', col_imgs)
 strip('pinky', truck + [vendor, cone])
 strip('plants', plants)
@@ -252,3 +254,7 @@ for key, stem in EXTRA.items():
     subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', srcs[0], *af, '-codec:a', 'libmp3lame', out], check=True)
     print('encoded', key, 'from', os.path.basename(srcs[0]))
 print('cells', len(cells), atlas.size)
+
+# Generate 2-frame rims for the personal cars; do not alter the generic cars.
+import subprocess as _sp, sys as _sys
+_sp.run([_sys.executable, str(ROOT / 'tools' / 'wheel-spin.py')], check=True)
