@@ -8,7 +8,7 @@ SRC = str(REPO / 'source') + '/'
 OUT = sys.argv[1] if len(sys.argv) > 1 else str(REPO / 'index.html')
 
 images = {
-    'actors': 'actors_q.png', 'ball24': 'ball24.png', 'ball48': 'ball48.png', 'cars': 'cars_q.png',
+    'actors': 'actors_q.png', 'ball24': 'ball24.png', 'ball48': 'ball48.png', 'cars': 'cars_q.png', 'carsSpin': 'cars_spin.png',
     'collector': 'collector_q.png', 'pinky': 'pinky_q.png', 'plants': 'plants_q.png', 'tiles': 'tiles.png',
     'clouds': 'clouds.png', 'backdrop': 'backdrop.webp', 'foreground': 'foreground.webp',
     'heads': 'heads_q.png', 'eat': 'eat_q.png', 'cones': 'cones.png', 'vanSide': 'van_side_q.png',
@@ -27,7 +27,7 @@ if missing: raise SystemExit('assets/built/meta.json is missing %s: run tools/pr
 data = '<script>window.CF_DATA=' + json.dumps({'img': img, 'meta': meta}, separators=(',', ':')) + ';</script>\n'
 # Music and voices; the optional ones (win theme, names, chants) are embedded once they exist,
 # and until then the game plays its synth stand-ins.
-for key in ['intro', 'select', 'game', 'pinky', 'win', 'voice-phil', 'voice-kim', 'voice-rose', 'voice-shay', 'voice-pinkys', 'voice-noodles', 'sfx-miss', 'voice-bounce', 'voice-versus']:
+for key in ['intro', 'select', 'game', 'pinky', 'win', 'voice-phil', 'voice-kim', 'voice-rose', 'voice-shay', 'voice-pinkys', 'voice-noodles', 'sfx-miss', 'sfx-family-beep', 'voice-bounce', 'voice-versus']:
     if os.path.exists(GEN + key + '.mp3'):
         data += '<script type="text/plain" id="aud-%s">%s</script>\n' % (key, b64(GEN + key + '.mp3'))
 icons = ('<link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,%s">\n'
