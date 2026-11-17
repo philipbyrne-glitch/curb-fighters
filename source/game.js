@@ -96,7 +96,7 @@ const Sound = (() => {
   // Phil's balance from the sound desk (tools/mixer.html). 1 = as designed; anything unlisted is 1.
   const MIX = {
     intro: 0.2, select: 0.2, game: 0.2, pinky: 0.2, win: 0.2,
-    'voice-phil': 0.4, 'voice-kim': 0.4, 'voice-rose': 0.4, 'voice-shay': 0.4, 'voice-bounce': 0.4, 'voice-versus': 0.4, 'voice-pinkys': 0.4, 'voice-noodles': 0.4, 'sfx-miss': 0.35, 'sfx-family-beep': 0.3,
+    'voice-phil': 0.4, 'voice-kim': 0.4, 'voice-rose': 0.4, 'voice-shay': 0.4, 'voice-bounce': 0.4, 'voice-versus': 0.4, 'voice-pinkys': 0.4, 'voice-noodles': 0.4, 'sfx-miss': 0.35, 'sfx-family-beep': 0.26,
     throw: 2, curb: 1.65, bounce: 2, bop: 2, catch: 1.9, hit: 1.25, double: 1.25, fanfare: 1.25, noodle: 2, surprise: 1.15, horn: 1.45, car: 1.25, van: 1.9, screech: 1, raceAway: 1.55, munch: 2, countdown: 1.75, go: 1.3, tick: 1, lock: 1,
   };
   const level = (name) => (MIX[name] ?? 1);
@@ -218,7 +218,10 @@ const Sound = (() => {
     tick: (n) => tone(330 + n * 80, .06, 'square', 0, .04),
     munch: (p, n) => tone(540 + p * 110 + (n % 3) * 70, .035, 'triangle', 0, .07),
     go: () => arp([523, 784, 1047], .07, .12),
-    countdown: (n) => tone(n ? 660 : 1320, n ? .1 : .3, 'square', 0, .05),
+    countdown: (n) => { // PINKY_RACE_POLISH_V1: racing start lights
+      if (n) { tone(392, .18, 'square', 0, .062); tone(196, .16, 'triangle', 0, .018); }
+      else { tone(880, .62, 'square', 0, .065); tone(1760, .48, 'triangle', 0, .022); }
+    },
     screech: () => { // tyres: two detuned squares warbling at chip speed over a bright hiss
       const a = [], b = [];
       for (let k = 0; k < 18; k++) { a.push((k % 2 ? 1720 : 1560) - k * 14); b.push((k % 2 ? 1490 : 1640) - k * 12); }
@@ -373,6 +376,19 @@ function blitHead(c, key, x, y, f = 1) {
   const H = META.heads, j = H.index[key]; if (j === undefined) return;
   c.drawImage(IMG.heads, (j % H.cols) * H.w, Math.floor(j / H.cols) * H.h, H.w, H.h, Math.round(x), Math.round(y), H.w * f, H.h * f);
 }
+// Four individual 52x46 mouth-open frames; generated from each character's
+// original head sprite so hair, eyes, glasses and outlines remain pixel perfect.
+const EatOpenHeads = Array.from({ length: 4 }, (_, av) => {
+  const canv = makeCanvas(META.heads.w, META.heads.h), cc = canv.getContext('2d');
+  cc.imageSmoothingEnabled = false;
+  const k = META.eat[av].head;
+  blitHead(cc, k, 0, 0);
+  const mx = [28, 28, 28, 28][av], my = [27, 28, 28, 29][av];
+  cc.fillStyle = '#3b1c34'; cc.fillRect(mx - 2, my - 1, 7, 6); // open mouth
+  cc.fillStyle = '#f9eee4'; cc.fillRect(mx - 1, my, 5, 1);     // top teeth
+  cc.fillStyle = '#c85d76'; cc.fillRect(mx, my + 3, 3, 1);   // tongue
+  return canv;
+});
 function drawHead(c, i, o = {}, flip = false) {
   const H = META.heads; c.clearRect(0, 0, H.w, H.h);
   c.save(); c.imageSmoothingEnabled = false; if (flip) { c.translate(H.w, 0); c.scale(-1, 1); }
@@ -956,7 +972,7 @@ function returnToSelect() {
    ===================================================================== */
 const PINKY_BITES = 24;
 const PINKY_LEADER_BITE_VALUE = .7; // 30% slower eating when leading by >=20 points
-const PD = { heard: 3000, arrive: 4200, walk: 2400, serve: 2300, countdown: 3000, result: 3000, return: 2400, depart: 1500 };
+const PD = { heard: 3000, arrive: 4200, walk: 2400, serve: 2300, countdown: 4200, result: 3000, return: 2400, depart: 1500 };
 const PNEXT = { heard: 'arrive', arrive: 'walk', walk: 'serve', serve: 'countdown', countdown: 'race', result: 'return', return: 'depart', depart: 'done' };
 const PATHS = [[{ x: 0, y: HOME[0] }, { x: -.8, y: 1.5 }], [{ x: 0, y: HOME[1] }, { x: 3.4, y: -1.7 }, { x: 3.4, y: 1.5 }, { x: .9, y: 1.5 }]]; // round the van's nose to its serving side
 function along(path, u) {
@@ -1046,7 +1062,21 @@ function renderRace() {
   const e = G.pinky; if (!e) return;
   const el = G.clock - e.stageStart;
   let status = 'MUNCH!';
-  if (e.stage === 'countdown') { const n = Math.max(1, 3 - Math.floor(el / 1000)); status = String(n); if (G.lastCount !== n) { G.lastCount = n; Sound.sfx('countdown', n); } }
+  const preparing = e.stage === 'countdown';
+  const instructions = $('#race-instructions');
+  instructions.hidden = !preparing;
+  $('#race').classList.toggle('counting-down', preparing);
+  $('#race').classList.toggle('nom-start', e.stage === 'race' && el < 750);
+  if (preparing) {
+    // First a readable instruction panel; only afterwards begin three deliberate beats.
+    if (el < 1200) status = 'GET READY!';
+    else {
+      const n = Math.max(1, 3 - Math.floor((el - 1200) / 1000));
+      status = String(n);
+      if (G.lastCount !== n) { G.lastCount = n; Sound.sfx('countdown', n); }
+    }
+  }
+  else if (e.stage === 'race' && el < 750) status = 'NOM!';
   else if (e.stage === 'result') status = e.winner === null ? 'DEAD HEAT!' : '99 CHAMPION!';
   else if (e.winner !== null) status = 'LAST LICKS!';
   $('#race-status').textContent = status;
@@ -1080,16 +1110,18 @@ function drawEater(c, x, y, i, e, t) {
   c.fillStyle = '#17372d40'; c.beginPath(); c.ellipse(x, y + 2, 30, 7, 0, 0, Math.PI * 2); c.fill();
   if (won) { drawCharacter(c, x, y, av, { scale: 4, arms: true, jump: Math.max(0, Math.sin(t * .012)) * 5, flip }); return; }
   const bites = e.bites[i], stage = Math.min(8, Math.floor(bites / 3)), since = t - e.lastTap[i];
-  let key = em.head, dip = 0;
+  let key = em.head, mouthOpen = false;
   if (lost) key = I['emote' + av][0];
   else if (bites >= PINKY_BITES) key = I['emote' + av][1];
-  else if (since < 120) { key = I['emote' + av][1]; dip = 2; } // CHOMP: the head dives into the 99
+  else if (since < 145) mouthOpen = true; // CHOMP: open mouth without shifting the neck seam
   const ho = META.heads.offset[em.head];
   c.save(); c.translate(Math.round(x), Math.round(y)); if (flip) c.scale(-1, 1);
   c.drawImage(IMG.eat, av * 128, 0, 128, 112, -64 * f, -100 * f, 128 * f, 112 * f);             // body
-  blitHead(c, key, (ho[0] - 64) * f, (ho[1] - 100 + dip) * f, f);                                // head
+  // The head stays anchored to the neck; moving it down exposed a transparent seam.
+  if (mouthOpen) c.drawImage(EatOpenHeads[av], (ho[0] - 64) * f, (ho[1] - 100) * f, META.heads.w * f, META.heads.h * f);
+  else blitHead(c, key, (ho[0] - 64) * f, (ho[1] - 100) * f, f);
   const cr = META.cones.rects[0], coneTop = em.chin - 10, wafer = coneTop + Math.round(cr[3] * .48); // the swirl sits at the mouth
-  if (stage < 8) { const r = META.cones.rects[stage]; c.drawImage(IMG.cones, r[0], r[1], r[2], r[3], Math.round((em.cx - 64 - r[2] / 2) * f), (coneTop - 100) * f, r[2] * f, r[3] * f); } // the 99, bitten down stage by stage
+  if (stage < 8) { const r = META.cones.rects[stage]; c.drawImage(IMG.cones, r[0], r[1], r[2], r[3], Math.round((em.cx - 64 - r[2] / 2) * f), (coneTop - 100 - (mouthOpen ? 2 : 0)) * f, r[2] * f, r[3] * f); } // the 99, bitten down stage by stage
   c.save(); c.beginPath(); c.rect(-64 * f, (wafer - 100) * f, 128 * f, 112 * f); c.clip();      // only the lower hand grips the wafer, in front
   c.drawImage(IMG.eat, (4 + av) * 128, 0, 128, 112, -64 * f, -100 * f, 128 * f, 112 * f);
   c.restore();
@@ -1103,7 +1135,8 @@ function drawEater(c, x, y, i, e, t) {
 }
 const CHANTS = ['GO ON!', 'CHOMP CHOMP!', 'NO BRAIN FREEZE!'];
 function raceChant(e, t) {
-  if (e.stage === 'countdown') return ['READY…', 'STEADY…', 'GO!'][Math.min(2, Math.floor((t - e.stageStart) / 1000))];
+  if (e.stage === 'countdown') return t - e.stageStart < 1200 ? 'GET YOUR 99s!' : 'READY, SET…';
+  if (e.stage === 'race' && t - e.stageStart < 750) return 'NOM NOM NOM!';
   if (e.stage === 'result') return e.winner === null ? 'DEAD HEAT!' : 'WELL DONE ' + G.names[e.winner] + '!';
   return Math.max(...e.bites) >= 18 ? 'NEARLY THERE!' : CHANTS[Math.floor((t - e.stageStart) / 1300) % CHANTS.length];
 }

@@ -391,3 +391,22 @@ dialog .keys { color: var(--blush); }
 @keyframes float-up { 0% { opacity: 0; transform: translateY(14px) scale(.7); } 12% { opacity: 1; transform: translateY(0) scale(1.05); } 80% { opacity: 1; } 100% { opacity: 0; transform: translateY(-26px); } }
 @keyframes tilt { 50% { transform: rotate(90deg); } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; } }
+
+/* Pinky's starting lights: readable instructions and arcade-scale 3-2-1-NOM. */
+.race.counting-down .race-status, .race.nom-start .race-status {
+  font-size: clamp(38px, min(10vw, 16vh), 100px);
+  line-height: 1.12;
+  text-shadow: 4px 4px 0 #c2306f, 8px 8px 0 #2a1030;
+}
+.race-instructions {
+  padding: 11px 18px; max-width: min(82vw, 650px);
+  background: #281c44ee; border: 3px solid #fff3c6;
+  box-shadow: 5px 5px 0 #191127;
+  font: clamp(9px, min(1.8vw, 3vh), 15px)/1.65 var(--arcade);
+  color: #fff3c6; text-align: center;
+}
+.race-instructions b { color: #ffd966; }
+@media (max-height: 520px) {
+  .race.counting-down .race-status, .race.nom-start .race-status { font-size: clamp(28px, 10vh, 62px); }
+  .race-instructions { padding: 5px 10px; font-size: 9px; }
+}
