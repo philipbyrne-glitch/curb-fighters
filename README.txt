@@ -1,17 +1,22 @@
-CURB FIGHTERS — FAIRNESS UPDATE
+CURB FIGHTERS — WHEEL SPIN + FAMILY HORN
 
-Adds:
-1. Halfway 5-point sweet spots shrink by 15% of their original width after each successful 5-point shot in an uninterrupted turn (minimum 40% of original). Both power and aim zones shrink, plus yellow fringes. The first 5-point shot after a 10-point hit is unchanged; a miss or new curb hit resets the penalty. The CPU is affected too.
-2. If Pinky's arrives with one player leading by 20+ points, the leader's bites count for 0.7 units versus 1.0 for the other player. Determined when Pinky arrives, including post-match visits and CPU games.
+This patch is designed to apply to the existing GitHub Desktop repository AFTER the Phil/Kim family-car update. It modifies only anchored lines, so earlier fairness-balancing changes in source/game.js remain intact.
 
-APPLY (Mac)
-1. Unzip this file.
-2. In GitHub Desktop: Repository > Show in Finder.
-3. Copy this ZIP's tools/apply_balance_update.py into your repo's tools folder.
-4. In GitHub Desktop: Repository > Open in Terminal.
-5. Run: python3 tools/apply_balance_update.py
-6. GitHub Desktop should show modifications to source/game.js and docs/SPEC.md, and the new script file.
-7. Commit as "Add halfway streak and Pinky catch-up balancing" and Push origin.
-8. Run the GoDaddy publish workflow manually in GitHub Actions. Don't delete your existing game folders.
+1. In GitHub Desktop: Repository > Show in Finder.
+2. Unzip this archive. Copy its tools/ folder CONTENTS into the repository's existing tools/ folder. Do not replace the entire folder or delete existing files.
+3. GitHub Desktop: Repository > Open in Terminal.
+4. Run:
+   python3 tools/apply_wheel_beep_update.py
+   python3 tools/build.py
+   node --check source/game.js
+5. In GitHub Desktop: commit and push to main.
+6. Manually run GitHub Actions > Publish Curb Fighters to GoDaddy, then test live.
 
-The script patches the current game source in place and leaves the car artwork, asset atlases, and existing GoDaddy workflow unchanged. It intentionally refuses to run twice.
+What changes:
+- Two alternating rim frames, every 110 ms, only for Phil's grey VW ID.3 and Kim's turquoise Qashqai.
+- The generic traffic sprites remain identical.
+- The uploaded 0.7-second beep.wav is included as sfx-family-beep.mp3, unchanged in amplitude by encoding; the game applies a 0.3 gain relative to the source, followed by the normal SFX master control.
+- The sampled horn plays once per family-car pass near the center of the street, not on generic traffic.
+- The original driving-eligibility logic is untouched.
+
+No automatic GoDaddy deployment occurs on git push.
