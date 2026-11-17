@@ -1,0 +1,60 @@
+name: Prepare Curb Fighters gameplay update
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: curb-fighters-prepare
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: true
+
+      - name: Install image-processing dependency
+        run: python3 -m pip install --index-url https://pypi.org/simple Pillow
+
+      - name: Apply updates and rebuild
+        run: |
+          set -euo pipefail
+          if ! grep -q 'halfwayScale:' source/game.js; then
+            python3 tools/apply_balance_update.py
+          else
+            echo 'Balance update already installed; skipping.'
+          fi
+          if ! grep -q "const spin = color >= 2" source/game.js; then
+            python3 tools/apply_wheel_beep_update.py
+          else
+            echo 'Wheel and horn update already installed; skipping.'
+          fi
+          python3 tools/build.py
+          node --check source/game.js
+          test -s index.html
+          grep -q 'CF_DATA' index.html
+          test -s assets/built/cars_spin.png
+          test -s assets/built/sfx-family-beep.mp3
+
+      - name: Save prepared files to main
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add source/game.js docs/SPEC.md tools/build.py tools/prep_assets.py \
+            assets/built/meta.json assets/built/cars_spin.png \
+            assets/built/sfx-family-beep.mp3 assets/original/audio/family-car-beep.wav index.html
+          if git diff --cached --quiet; then
+            echo 'Nothing new to commit.'
+          else
+            git commit -m 'Apply gameplay balancing, animated wheels and passing horn'
+            git push origin HEAD:main
+          fi

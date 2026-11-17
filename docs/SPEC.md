@@ -290,3 +290,7 @@ Publish the finished result through Sites as **Curb Fighters**, using the slug *
 **Icons.** The browser tab and home-screen icons are the yellow ball. On portrait phones, white pixel arrows circle the spinning ball to say "turn me sideways".
 
 **Look.** The in-game road is about a fifth darker than the source tile. On Choose Your Champion, feet are placed by backdrop rows so everyone stands on the road on any screen shape, and the far characters are only slightly smaller than the front one.
+
+**Fairness — long halfway streaks.** Following a 10-point curb hit, the first halfway 5-point shot uses the original power and aim sweet spots. Every successful 5-point shot in that uninterrupted turn narrows both green zones (and their yellow fringes) for the following attempt by 15 percentage points of their original width, down to a minimum of 40%. The difficulty resets on a miss, a new 10/30-point curb hit, a new match, or a Pinky boost that sends the thrower back to their own curb. CPU opponents follow the same zones.
+
+**Fairness — Pinky's catch-up.** At the moment Pinky's van arrives, a score gap of 20 or more handicaps the *leading* player only: each of their bites advances the ice cream race by 0.7 rather than 1. The trailing player's bites remain at 1. The same rule applies to the CPU, and the race bars, cone animation and winner check use fractional progress. Equal scores or a smaller gap use normal bites for both.

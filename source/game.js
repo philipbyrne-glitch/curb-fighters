@@ -25,11 +25,20 @@ function makeCanvas(w, h) { const c = document.createElement('canvas'); c.width 
    ===================================================================== */
 const Rules = {
   WIN: 100,
-  green: (halfway) => halfway ? { power: [.42, .64], aim: [.41, .59] } : { power: [.50, .84], aim: [.36, .64] },
-  fringe: (halfway) => halfway ? .03 : .04,
+  // A successful 5-pointer makes the next halfway attempt tougher: 15% of the
+  // original width per extra shot, capped at 40% to keep a realistic sweet spot.
+  halfwayScale: (fiveStreak = 0) => Math.max(.4, 1 - .15 * Math.max(0, fiveStreak)),
+  green: (halfway, fiveStreak = 0) => {
+    const base = halfway ? { power: [.42, .64], aim: [.41, .59] } : { power: [.50, .84], aim: [.36, .64] };
+    if (!halfway || fiveStreak === 0) return base;
+    const scale = Rules.halfwayScale(fiveStreak);
+    const shrink = ([lo, hi]) => { const mid = (lo + hi) / 2, half = (hi - lo) * scale / 2; return [mid - half, mid + half]; };
+    return { power: shrink(base.power), aim: shrink(base.aim) };
+  },
+  fringe: (halfway, fiveStreak = 0) => halfway ? .03 * Rules.halfwayScale(fiveStreak) : .04,
   gold: (boosted) => boosted ? { power: [.52, .82], aim: [.38, .62] } : { power: [.735, .755], aim: [.475, .525] },
-  judge(power, aim, halfway, boosted, roll = Math.random()) {
-    const g = Rules.green(halfway), fr = Rules.fringe(halfway);
+  judge(power, aim, halfway, boosted, roll = Math.random(), fiveStreak = 0) {
+    const g = Rules.green(halfway, fiveStreak), fr = Rules.fringe(halfway, fiveStreak);
     const inside = (v, [lo, hi]) => v >= lo && v <= hi;
     const near = (v, [lo, hi]) => v >= lo - fr && v <= hi + fr;
     let p = power, a = aim, chance = false;
@@ -46,10 +55,13 @@ const Rules = {
     if (!halfway) { const d = Rules.gold(boosted); if (inside(p, d.power) && inside(a, d.aim)) return { points: 30, kind: 'double', chance }; }
     return { points: halfway ? 5 : 10, kind: 'hit', chance };
   },
-  cpuPlan(halfway, rng = Math.random) {
-    const z = Rules.green(halfway), success = rng() < (halfway ? .53 : .65);
-    let power = z.power[0] + .02 + rng() * (z.power[1] - z.power[0] - .04);
-    let aim = z.aim[0] + .025 + rng() * (z.aim[1] - z.aim[0] - .05);
+  cpuPlan(halfway, rng = Math.random, fiveStreak = 0) {
+    const z = Rules.green(halfway, fiveStreak), success = rng() < (halfway ? .53 : .65);
+    // Keep the CPU's aiming margins proportional to the increasingly tight zone.
+    const pMargin = (z.power[1] - z.power[0]) * .09;
+    const aMargin = (z.aim[1] - z.aim[0]) * .14;
+    let power = z.power[0] + pMargin + rng() * (z.power[1] - z.power[0] - 2 * pMargin);
+    let aim = z.aim[0] + aMargin + rng() * (z.aim[1] - z.aim[0] - 2 * aMargin);
     if (!success) { if (rng() < .55) aim = rng() < .5 ? z.aim[0] - .09 : z.aim[1] + .09; else power = rng() < .5 ? z.power[0] - .08 : z.power[1] + .08; }
     return { power, aim };
   },
@@ -415,7 +427,7 @@ const CAR_MS = 9000, PREP_MS = 2400;
 const G = {
   screen: 'boot', phase: 'idle', clock: 0, lastInput: COARSE ? 'touch' : 'key',
   names: ['PHIL', 'SHAY'], avatars: [0, 1], cpu: false, controlMode: 'timing',
-  match: { player: 0, scores: [0, 0], halfway: false, winner: null },
+  match: { player: 0, scores: [0, 0], halfway: false, fiveStreak: 0, winner: null },
   power: .01, aim: .01, meterClock: 0, drag: null,
   shot: null, ball: null, caught: false, rest: null,
   throwNo: 0, bombs: [2, 2], noodleUntil: 0, noodleCaller: null, noodleAt: -1e9,
@@ -763,7 +775,7 @@ function beginVictory(p) {
    ===================================================================== */
 function startMatch() {
   const m = G.match;
-  m.player = 0; m.scores = [0, 0]; m.halfway = false; m.winner = null;
+  m.player = 0; m.scores = [0, 0]; m.halfway = false; m.fiveStreak = 0; m.winner = null;
   Object.assign(G, {
     phase: 'ready', shot: null, ball: null, rest: null, caught: false, drag: null, throwNo: 0, bombs: [2, 2], boost: [false, false],
     noodleCaller: null, noodleAt: -1e9, noodleUntil: 0, pinkySeen: false, pinky: null, victor: null, victoryDone: false,
@@ -779,7 +791,7 @@ function startMatch() {
 function ready() {
   const m = G.match, p = m.player;
   Object.assign(G, { noodleCaller: null, noodleAt: -1e9, noodleUntil: 0, caught: false, shot: null, ball: null, drag: null, power: .01, aim: .01, meterClock: 0, queuedStart: false, spurl: null });
-  if (G.boost[p] && m.halfway) m.halfway = false; // a 99 BOOST throw always starts from the curb
+  if (G.boost[p] && m.halfway) { m.halfway = false; m.fiveStreak = 0; } // 99 BOOST always starts a fresh curb streak
   G.rest = m.halfway ? null : { x: sign() * .45, y: HOME[p] - sign() * .18, z: .14 + BALL_Z, spin: 0 };
   view.target = p === 0 ? 0 : Math.PI / 2; if (REDUCED) view.camera = view.target; // P2: bottom-right, throwing right to left
   G.phase = 'ready'; G.prepStart = G.clock; G.prepBops = 0;
@@ -799,7 +811,7 @@ function startPower() { Sound.unlock(); G.phase = 'power'; G.meterClock = 0; G.m
 function lockPower() { G.phase = 'aim'; G.meterClock = 0; G.meterStart = G.clock; Sound.sfx('lock', 1); hud(); }
 function launch() {
   const m = G.match, boosted = G.boost[m.player] && !m.halfway;
-  const outcome = Rules.judge(G.power, G.aim, m.halfway, boosted);
+  const outcome = Rules.judge(G.power, G.aim, m.halfway, boosted, Math.random(), m.fiveStreak);
   if (G.boost[m.player]) G.boost[m.player] = false; // one throw only
   G.shot = makeShot(outcome); G.rest = null; G.drag = null; G.phase = 'flight';
   Sound.sfx('throw', m.halfway); hud();
@@ -807,7 +819,13 @@ function launch() {
 function endTurn() {
   const m = G.match, o = G.shot?.outcome;
   G.throwNo++;
-  if (o && o.points) m.halfway = true; else { m.player = 1 - m.player; m.halfway = false; }
+  if (o && o.points) {
+    // 10/30-pointer resets the difficulty; consecutive 5s progressively tighten it.
+    m.fiveStreak = o.points === 5 ? m.fiveStreak + 1 : 0;
+    m.halfway = true;
+  } else {
+    m.player = 1 - m.player; m.halfway = false; m.fiveStreak = 0;
+  }
   G.shot = null; ready();
 }
 function act(p) {
@@ -925,6 +943,7 @@ function returnToSelect() {
    8. PINKY'S ICE CREAM VAN
    ===================================================================== */
 const PINKY_BITES = 24;
+const PINKY_LEADER_BITE_VALUE = .7; // 30% slower eating when leading by >=20 points
 const PD = { heard: 3000, arrive: 4200, walk: 2400, serve: 2300, countdown: 3000, result: 3000, return: 2400, depart: 1500 };
 const PNEXT = { heard: 'arrive', arrive: 'walk', walk: 'serve', serve: 'countdown', countdown: 'race', result: 'return', return: 'depart', depart: 'done' };
 const PATHS = [[{ x: 0, y: HOME[0] }, { x: -.8, y: 1.5 }], [{ x: 0, y: HOME[1] }, { x: 3.4, y: -1.7 }, { x: 3.4, y: 1.5 }, { x: .9, y: 1.5 }]]; // round the van's nose to its serving side
@@ -956,7 +975,9 @@ const Pinky = {
 };
 function beginPinky(post) {
   G.pinkySeen = true;
-  G.pinky = { stage: 'heard', stageStart: G.clock, bites: [0, 0], lastTap: [-1e9, -1e9], winner: null, wonAt: null, post };
+  const scores = G.match.scores;
+  const handicapped = Math.abs(scores[0] - scores[1]) >= 20 ? (scores[0] > scores[1] ? 0 : 1) : null;
+  G.pinky = { stage: 'heard', stageStart: G.clock, bites: [0, 0], lastTap: [-1e9, -1e9], handicapped, winner: null, wonAt: null, post };
   G.phase = 'pinky'; G.drag = null; G.ball = null; G.rest = null; view.target = 0; G.engineAt = 0;
   G.nextCar = Math.max(G.nextCar, G.throwNo + 2);
   Sound.music('pinky'); // the tune arrives before the van does
@@ -967,7 +988,9 @@ function beginPinky(post) {
 function bite(p) {
   const e = G.pinky;
   if (!e || e.stage !== 'race' || e.bites[p] >= PINKY_BITES || G.clock - e.lastTap[p] < 55) return;
-  e.lastTap[p] = G.clock; e.bites[p]++;
+  e.lastTap[p] = G.clock;
+  // Keep fractional progress for the score bar, cone animation and winner check.
+  e.bites[p] = Math.min(PINKY_BITES, e.bites[p] + (e.handicapped === p ? PINKY_LEADER_BITE_VALUE : 1));
   Sound.sfx('munch', p, e.bites[p]);
   if (e.bites[p] >= PINKY_BITES && e.winner === null) { e.winner = p; e.wonAt = G.clock; }
 }
@@ -1103,7 +1126,7 @@ function updateCPU() {
     return;
   }
   const token = G.throwNo + ':' + G.phase;
-  if (token !== G.cpuToken) { G.cpuToken = token; G.cpuAt = G.clock + 850 + Math.random() * 450; if (G.phase === 'ready') { G.cpuPlan = Rules.cpuPlan(G.match.halfway); G.cpuBothered = false; } }
+  if (token !== G.cpuToken) { G.cpuToken = token; G.cpuAt = G.clock + 850 + Math.random() * 450; if (G.phase === 'ready') { G.cpuPlan = Rules.cpuPlan(G.match.halfway, Math.random, G.match.fiveStreak); G.cpuBothered = false; } }
   if (!G.cpuPlan) return;
   if (G.phase === 'ready' && G.clock >= G.cpuAt && !prepping()) act(1);
   else if (G.phase === 'power' && G.power >= G.cpuPlan.power) act(1);
@@ -1182,7 +1205,7 @@ function hud() {
   const m = G.match, P = G.phase, p = m.player;
   els.game.dataset.phase = P; els.game.dataset.control = G.controlMode;
   const boosted = G.boost[p] && !m.halfway && P !== 'pinky';
-  const g = Rules.green(m.halfway), fr = Rules.fringe(m.halfway), d = Rules.gold(boosted);
+  const g = Rules.green(m.halfway, m.fiveStreak), fr = Rules.fringe(m.halfway, m.fiveStreak), d = Rules.gold(boosted);
   ['power', 'aim'].forEach((k, n) => { const e = els.meter[n]; setZone(e.fringe, g[k][0] - fr, g[k][1] + fr); setZone(e.green, g[k][0], g[k][1]); setZone(e.gold, d[k][0], d[k][1]); e.gold.hidden = m.halfway; });
   const showMeters = G.victor === null && ((G.controlMode === 'timing' || cpuTurn()) && ['ready', 'power', 'aim'].includes(P) || P === 'dragging');
   els.meters.hidden = !showMeters;
