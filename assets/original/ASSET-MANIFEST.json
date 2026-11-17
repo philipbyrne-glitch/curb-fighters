@@ -1,0 +1,132 @@
+[
+  {
+    "path": "assets/cars.json",
+    "bytes": 132,
+    "sha256": "1dcf605d7b902c6bf2b298cca419ccd61b9d70e9a1f4d2eadba9f5c9bdffb4ff"
+  },
+  {
+    "path": "assets/cars.png",
+    "bytes": 1079663,
+    "sha256": "f4f7548f9244a0338df84f55b15cd2a003ee699da6aa47ad89b2ad4a540071b1"
+  },
+  {
+    "path": "assets/champion-backdrop-fence.png",
+    "bytes": 2120325,
+    "sha256": "ac024d55bda7fe35ea2a71e6d2e399c5de9a84bd9fa3b4089a0fd568047275c7"
+  },
+  {
+    "path": "assets/champion-backdrop.png",
+    "bytes": 2318055,
+    "sha256": "245d4e4715dcb9b391b65b2fdffdeca09e691505b670fd2ab901d045798ad64d"
+  },
+  {
+    "path": "assets/champion-emotes.json",
+    "bytes": 1736,
+    "sha256": "9d69cf9dee9bb3763c79297949befab2bf1aef33e85a4c7af019523f49292d62"
+  },
+  {
+    "path": "assets/champion-emotes.png",
+    "bytes": 1345200,
+    "sha256": "eea141220464d8f9e8e1d92b50d62021cf7eb47512730432a7e0d09eff81a96d"
+  },
+  {
+    "path": "assets/conker-collector.png",
+    "bytes": 1044578,
+    "sha256": "2b40600d0880b0498a00cc1f071b5e28b3e2256c52741b15dd73a8b8887aa482"
+  },
+  {
+    "path": "assets/doodle-walker.json",
+    "bytes": 131,
+    "sha256": "09bf82e335662960ebdbad6aaac3be7561b00d06b57ebc890596b383fa873958"
+  },
+  {
+    "path": "assets/doodle-walker.png",
+    "bytes": 1090113,
+    "sha256": "bb10cd333370a6f13727a672eb73eb4bb4809e6802bd69eaaaa641a297514d35"
+  },
+  {
+    "path": "assets/family-alternates.json",
+    "bytes": 386,
+    "sha256": "dea7403bd024b7693358b76cf6b799840e3520b0ca0a725e41ca325ddcc799c1"
+  },
+  {
+    "path": "assets/family-alternates.png",
+    "bytes": 1066629,
+    "sha256": "095c5151622c84ebabb4731567e2f7887472b171f76ed667fe4c1bc62522cf3d"
+  },
+  {
+    "path": "assets/family-idle.json",
+    "bytes": 585,
+    "sha256": "3b413e3139bba123d0eb2ad43be2b10d5619a78070d7422204dbbd0a3d36fb37"
+  },
+  {
+    "path": "assets/family-idle.png",
+    "bytes": 1834413,
+    "sha256": "efd4d9ca840d21f653033d43822ffb70fbeb10aa3ea87d4e930f28ce477dc964"
+  },
+  {
+    "path": "assets/family-sprites.json",
+    "bytes": 305,
+    "sha256": "1c17d922891dd99b85fc1175375447970f24c2db3c8180a58aa6df74fcbcffdf"
+  },
+  {
+    "path": "assets/family-sprites.png",
+    "bytes": 1172351,
+    "sha256": "a074e10c274889660ab96b1e6a503eb4c97ab7aaa249cf6cc172d854795b71cd"
+  },
+  {
+    "path": "assets/game-theme.mp3",
+    "bytes": 2043045,
+    "sha256": "a0b46ac7affd846d1390cda279511c5fbd9b87c0f99e27a22a97e7036f5772dd"
+  },
+  {
+    "path": "assets/intro-theme.mp3",
+    "bytes": 1927276,
+    "sha256": "e927ed772ffaa9ab5eadd29167687356a3d0513c868d3032d5129e3da17c3446"
+  },
+  {
+    "path": "assets/kim-sprites.json",
+    "bytes": 389,
+    "sha256": "e2806e46f28d04b8049834235f2cfe09d5f8ea3e1e5aab8f80770ea356fe9114"
+  },
+  {
+    "path": "assets/kim-sprites.png",
+    "bytes": 1107372,
+    "sha256": "67c3e2b23fe1ee02df8efa29f2dd7201c981d0b29717f024f68429717ee50c16"
+  },
+  {
+    "path": "assets/pinky-sprites.json",
+    "bytes": 85,
+    "sha256": "aefd2e658d97a3ac866eae4751d2cd25ddf53624c362ac06a952295b4a140249"
+  },
+  {
+    "path": "assets/pinky-sprites.png",
+    "bytes": 1270097,
+    "sha256": "4094077de01de7a86a65cc7ff02ac579a93ed9c65de6638c64c0d006fa26ef78"
+  },
+  {
+    "path": "assets/pinky-theme.mp3",
+    "bytes": 1076244,
+    "sha256": "a0948f503603a555a1a04b9c4b4c76f94042f809dd48a3c4c330fc5ebe929e97"
+  },
+  {
+    "path": "assets/riverbank-sprites.png",
+    "bytes": 1025760,
+    "sha256": "c0e3d2a0628caaee74afdc4770f275c21784da43bc8fd25f0716cd0f25d6a5f4"
+  },
+  {
+    "path": "assets/select-theme.mp3",
+    "bytes": 3336231,
+    "sha256": "784e04c22c5a86432fb9391e8d61dc50edf7b84cf965d1e9bb6942f83f88bf27"
+  },
+  {
+    "path": "assets/terrain.png",
+    "bytes": 1400221,
+    "sha256": "23d70147c52115fc135a238a60d9458f5dc8a95d6f3b4a55fbb29c8173cc0c00"
+  },
+  {
+    "path": "assets/yellow-ball.png",
+    "bytes": 798614,
+    "sha256": "c8a404ce896ee82f6f45668567e52282f7694ee20024116e00b1c2893df1654b"
+  }
+]

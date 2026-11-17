@@ -1,0 +1,5 @@
+Pillow
+numpy
+scipy
+# Only for tools/smoke_test.py (then run: python3 -m playwright install chromium)
+playwright
