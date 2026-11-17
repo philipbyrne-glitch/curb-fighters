@@ -383,10 +383,11 @@ const EatOpenHeads = Array.from({ length: 4 }, (_, av) => {
   cc.imageSmoothingEnabled = false;
   const k = META.eat[av].head;
   blitHead(cc, k, 0, 0);
-  const mx = [28, 28, 28, 28][av], my = [27, 28, 28, 29][av];
-  cc.fillStyle = '#3b1c34'; cc.fillRect(mx - 2, my - 1, 7, 6); // open mouth
-  cc.fillStyle = '#f9eee4'; cc.fillRect(mx - 1, my, 5, 1);     // top teeth
-  cc.fillStyle = '#c85d76'; cc.fillRect(mx, my + 3, 3, 1);   // tongue
+  // PINKY_RACE_ANIMATION_FIX_V1: tuned per-character mouth anchors
+  const mx = [31, 31, 31, 31][av], my = [34, 33, 34, 34][av];
+  cc.fillStyle = '#3b1c34'; cc.fillRect(mx - 2, my - 1, 6, 5); // open mouth
+  cc.fillStyle = '#f9eee4'; cc.fillRect(mx - 1, my, 4, 1);     // top teeth
+  cc.fillStyle = '#c85d76'; cc.fillRect(mx, my + 2, 2, 1);     // tongue
   return canv;
 });
 function drawHead(c, i, o = {}, flip = false) {
@@ -1117,11 +1118,15 @@ function drawEater(c, x, y, i, e, t) {
   const ho = META.heads.offset[em.head];
   c.save(); c.translate(Math.round(x), Math.round(y)); if (flip) c.scale(-1, 1);
   c.drawImage(IMG.eat, av * 128, 0, 128, 112, -64 * f, -100 * f, 128 * f, 112 * f);             // body
-  // The head stays anchored to the neck; moving it down exposed a transparent seam.
-  if (mouthOpen) c.drawImage(EatOpenHeads[av], (ho[0] - 64) * f, (ho[1] - 100) * f, META.heads.w * f, META.heads.h * f);
-  else blitHead(c, key, (ho[0] - 64) * f, (ho[1] - 100) * f, f);
+  // PINKY_RACE_ANIMATION_FIX_V1: lower the whole head 1px in the eating pose and
+  // paint a tiny bridge under the chin so no transparent neck seam can show through.
+  const hx = (ho[0] - 64) * f, hy = (ho[1] - 99) * f;
+  const seam = [[27, 43, 10, 2], [27, 43, 10, 2], [27, 43, 10, 2], [27, 43, 10, 2]][av];
+  c.fillStyle = '#f3c7a2'; c.fillRect((ho[0] - 64 + seam[0]) * f, (ho[1] - 99 + seam[1]) * f, seam[2] * f, seam[3] * f);
+  if (mouthOpen) c.drawImage(EatOpenHeads[av], hx, hy, META.heads.w * f, META.heads.h * f);
+  else blitHead(c, key, hx, hy, f);
   const cr = META.cones.rects[0], coneTop = em.chin - 10, wafer = coneTop + Math.round(cr[3] * .48); // the swirl sits at the mouth
-  if (stage < 8) { const r = META.cones.rects[stage]; c.drawImage(IMG.cones, r[0], r[1], r[2], r[3], Math.round((em.cx - 64 - r[2] / 2) * f), (coneTop - 100 - (mouthOpen ? 2 : 0)) * f, r[2] * f, r[3] * f); } // the 99, bitten down stage by stage
+  if (stage < 8) { const r = META.cones.rects[stage]; c.drawImage(IMG.cones, r[0], r[1], r[2], r[3], Math.round((em.cx - 64 - r[2] / 2) * f), (coneTop - 100 - (mouthOpen ? 3 : 0)) * f, r[2] * f, r[3] * f); } // the 99, bitten down stage by stage
   c.save(); c.beginPath(); c.rect(-64 * f, (wafer - 100) * f, 128 * f, 112 * f); c.clip();      // only the lower hand grips the wafer, in front
   c.drawImage(IMG.eat, (4 + av) * 128, 0, 128, 112, -64 * f, -100 * f, 128 * f, 112 * f);
   c.restore();
