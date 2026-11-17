@@ -842,7 +842,14 @@ function noodle(i) {
 }
 function beginTraffic() {
   G.nextCar = G.throwNo + 7 + Math.floor(Math.random() * 4);
-  G.carStart = G.clock; G.carUntil = G.clock + CAR_MS; G.carDir = Math.random() < .5 ? 1 : -1; G.carColor = Math.floor(Math.random() * 2);
+  G.carStart = G.clock; G.carUntil = G.clock + CAR_MS; G.carDir = Math.random() < .5 ? 1 : -1;
+  // Generic cars always available. Phil's VW and Kim's Qashqai are independently
+  // eligible only when their respective character is NOT one of the two players.
+  // Both may appear if neither is playing; neither if both are playing.
+  const trafficCars = [0, 1];
+  if (!G.avatars.includes(0)) trafficCars.push(2); // Phil
+  if (!G.avatars.includes(3)) trafficCars.push(3); // Kim
+  G.carColor = trafficCars[Math.floor(Math.random() * trafficCars.length)];
   G.waitVariants = [Math.floor(Math.random() * 4), Math.floor(Math.random() * 2), Math.floor(Math.random() * 2), Math.floor(Math.random() * 2)];
   G.phase = 'traffic'; G.engineAt = 0;
   showBanner('CAR!', 'EVERYONE ON THE PAVEMENT', '', 1900);

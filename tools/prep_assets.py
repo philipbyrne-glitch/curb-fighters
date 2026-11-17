@@ -98,6 +98,16 @@ for color in range(2):
     for rev in range(2):
         sx, sy, sw, sh = cars[color][rev][:4]
         car_imgs.append(threshold(nearest(carA.crop((sx, sy, sx + sw, sy + sh)), 104, 104 * sh / sw)))
+# Two optional family cars. The original four entries remain unchanged (generic traffic).
+# Each row: front/towards, rear/away. Phil = 4-5, Kim = 6-7.
+family_car_sheet = load('family-cars.png')
+for row in range(2):
+    for col in range(2):
+        part = family_car_sheet.crop((col * 627, row * 627, (col + 1) * 627, (row + 1) * 627))
+        bb = part.getbbox()
+        if not bb: raise ValueError('Missing family car frame: %s, %s' % (row, col))
+        part = part.crop(bb)
+        car_imgs.append(threshold(nearest(part, 104, 104 * part.height / part.width)))
 colA = load('conker-collector.png')
 cw, ch = colA.width / 4, colA.height
 col_imgs = [threshold(nearest(colA.crop((int(k * cw), 0, int((k + 1) * cw), ch)), 78 * cw / ch, 78)) for k in range(4)]
