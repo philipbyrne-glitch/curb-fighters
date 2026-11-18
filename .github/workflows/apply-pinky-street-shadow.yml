@@ -1,0 +1,40 @@
+name: Apply Pinky's street shadow
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: curb-fighters-street-shadow
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: true
+      - name: Apply street-only shadow and build
+        run: |
+          set -euo pipefail
+          python3 tools/apply_pinky_street_shadow.py
+          node --check source/game.js
+          python3 tools/build.py
+          test -s index.html
+          grep -q 'PINKY_STREET_SHADOW_POLYGON_V1' index.html
+      - name: Commit rebuilt game to main
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add source/game.js index.html
+          if ! git diff --cached --quiet; then
+            git commit -m "Apply calibrated Pinky's street shadow only"
+            git push origin HEAD:main
+          fi
