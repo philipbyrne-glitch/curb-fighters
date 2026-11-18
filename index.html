@@ -971,7 +971,7 @@ const EatOpenHeads = Array.from({ length: 4 }, (_, av) => {
   blitHead(cc, META.eat[av].head, 0, 0);
   // Avatar sprite order: Phil, Shay, Rose, Kim.
   // CURBS_EXACT_CALIBRATED_MOUTHS_V1: exactly the Sprite Lab values; Phil, Shay, Rose, Kim.
-  const mx = [28, 33, 32, 31][av], my = [39, 34, 41, 40][av];
+  const mx = [28, 33, 32, 31][av], my = [39, 29, 41, 30][av]; // SHAY_KIM_MOUTH_TUNE_V1
   const mw = [7, 6, 8, 6][av], mh = [5, 4, 4, 5][av];
   const left = mx - Math.floor(mw / 2), top = my - 1;
   cc.fillStyle = '#3b1c34'; cc.fillRect(left, top, mw, mh);
