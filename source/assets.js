@@ -1,0 +1,43 @@
+window.CF_DATA = {
+  "img": {
+    "actors": "assets/built/actors_q.png",
+    "ball24": "assets/built/ball24.png",
+    "ball48": "assets/built/ball48.png",
+    "cars": "assets/built/cars_q.png",
+    "carsSpin": "assets/built/cars_spin.png",
+    "collector": "assets/built/collector_q.png",
+    "pinky": "assets/built/pinky_q.png",
+    "plants": "assets/built/plants_q.png",
+    "tiles": "assets/built/tiles.png",
+    "clouds": "assets/built/clouds.png",
+    "backdrop": "assets/built/backdrop.webp",
+    "foreground": "assets/built/foreground.webp",
+    "heads": "assets/built/heads_q.png",
+    "eat": "assets/built/eat_q.png",
+    "cones": "assets/built/cones.png",
+    "vanSide": "assets/built/van_side_q.png",
+    "trophy": "assets/built/trophy_q.png",
+    "spurl": "assets/built/spurl.png"
+  },
+  "metaUrl": "assets/built/meta.json",
+  "audio": {
+    "intro": "assets/built/intro.mp3",
+    "select": "assets/built/select.mp3",
+    "game": "assets/built/game.mp3",
+    "pinky": "assets/built/pinky.mp3",
+    "win": "assets/built/win.mp3",
+    "voice-phil": "assets/built/voice-phil.mp3",
+    "voice-kim": "assets/built/voice-kim.mp3",
+    "voice-rose": "assets/built/voice-rose.mp3",
+    "voice-shay": "assets/built/voice-shay.mp3",
+    "voice-pinkys": "assets/built/voice-pinkys.mp3",
+    "voice-noodles": "assets/built/voice-noodles.mp3",
+    "sfx-miss": "assets/built/sfx-miss.mp3",
+    "sfx-family-beep": "assets/built/sfx-family-beep.mp3",
+    "sfx-yeah": "assets/built/sfx-yeah.mp3",
+    "voice-bounce": "assets/built/voice-bounce.mp3",
+    "voice-versus": "assets/built/voice-versus.mp3",
+    "voice-wins": "assets/built/voice-wins.mp3",
+    "voice-double-trouble": "assets/built/voice-double-trouble.mp3"
+  }
+};

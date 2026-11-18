@@ -31,17 +31,17 @@ jobs:
           fi
           node --check source/game.js
           python3 tools/build.py
-          test -s index.html
-          grep -q 'CF_DATA' index.html
-          grep -q 'race-instructions' index.html
-          grep -q 'PINKY_RACE_POLISH_V1' index.html
+          test -s dist/index.html
+          grep -q 'CF_DATA' dist/index.html
+          grep -q 'race-instructions' dist/index.html
+          grep -q 'PINKY_RACE_POLISH_V1' dist/index.html
 
       - name: Commit the game update
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add source/game.js source/index.html source/style.css index.html
+          git add source/game.js source/style.css index.html
           if git diff --cached --quiet; then
             echo 'No files changed.'
           else

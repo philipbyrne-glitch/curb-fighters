@@ -26,8 +26,8 @@ jobs:
           python3 tools/apply_pinkys_iso_shadow.py
           node --check source/game.js
           python3 tools/build.py
-          test -s index.html
-          grep -q 'PINKY_ISO_SHADOW_CALIBRATED_V1' index.html
+          test -s dist/index.html
+          grep -q 'PINKY_ISO_SHADOW_CALIBRATED_V1' dist/index.html
       - name: Commit update
         run: |
           set -euo pipefail
