@@ -168,7 +168,11 @@ input[type=range]::-moz-range-thumb { width: 10px; height: 16px; background: var
   font: clamp(30px, min(7vw, 13vh), 96px)/1 var(--arcade); color: var(--gold); letter-spacing: -.06em;
   text-shadow: .07em .07em 0 #c2306f, .13em .13em 0 #2a1030;
 }
-.vs.slam { animation: slam .32s steps(4); }
+.vs.slam { transform-origin: 50% 50%; animation: vs-center-zoom .32s steps(4) both; }
+@keyframes vs-center-zoom {
+  from { transform: translate(-50%, -50%) rotate(-6deg) scale(.2); opacity: 0; }
+  to   { transform: translate(-50%, -50%) rotate(-6deg) scale(1); opacity: 1; }
+}
 .go:hover { transform: translateX(-50%) scale(1.05); }
 .go:active { transform: translateX(-50%) scale(.95); }
 
