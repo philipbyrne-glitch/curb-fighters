@@ -96,7 +96,7 @@ const Sound = (() => {
   // Phil's balance from the sound desk (tools/mixer.html). 1 = as designed; anything unlisted is 1.
   const MIX = {
     intro: 0.2, select: 0.2, game: 0.2, pinky: 0.2, win: 0.2,
-    'voice-phil': 0.4, 'voice-kim': 0.4, 'voice-rose': 0.4, 'voice-shay': 0.4, 'voice-bounce': 0.4, 'voice-versus': 0.4, 'voice-pinkys': 0.4, 'voice-noodles': 0.4, 'sfx-miss': 0.35, 'sfx-family-beep': 0.26,
+    'voice-phil': 0.4, 'voice-kim': 0.4, 'voice-rose': 0.4, 'voice-shay': 0.4, 'voice-bounce': 0.4, 'voice-versus': 0.4, 'voice-pinkys': 0.4, 'voice-noodles': 0.4, 'sfx-miss': 0.35, 'sfx-family-beep': 0.26, 'sfx-yeah': 0.55,
     throw: 2, curb: 1.65, bounce: 2, bop: 2, catch: 1.9, hit: 1.25, double: 1.25, fanfare: 1.25, noodle: 2, surprise: 1.15, horn: 1.45, car: 1.25, van: 1.9, screech: 1, raceAway: 1.55, munch: 2, countdown: 1.75, go: 1.3, tick: 1, lock: 1,
   };
   const level = (name) => (MIX[name] ?? 1);
@@ -271,6 +271,34 @@ const Sound = (() => {
         src.onended = () => { if (voices[channel] === src) voices[channel] = null; };
       });
       return true;
+    },
+    // CURBS_VICTORY_AUDIO_FLOW_V1: sequence by actual sample length, not a fixed delay.
+    sequence(keys, valid = () => true) {
+      Promise.all(keys.map((key) => decode(key))).then((entries) => {
+        if (!entries.every(Boolean) || !valid() || !running() || !prefs.on || prefs.sfx <= 0) return;
+        // Keep any lingering voice or street cheer out of the winner announcement.
+        Object.keys(voices).forEach((k) => {
+          const old = voices[k];
+          if (old) { try { old.stop(); } catch { /* already ended */ } voices[k] = null; }
+        });
+        let at = ctx.currentTime + .20;
+        const firstAt = at;
+        keys.forEach((key, i) => {
+          const entry = entries[i], src = ctx.createBufferSource(), gain = ctx.createGain();
+          const duration = entry.loopEnd - entry.loopStart;
+          src.buffer = entry.buffer;
+          gain.gain.value = level(key);
+          src.connect(gain); gain.connect(sfxBus);
+          src.start(at, entry.loopStart, duration);
+          const channel = 'celebration-sequence-' + i;
+          voices[channel] = src;
+          src.onended = () => { if (voices[channel] === src) voices[channel] = null; };
+          at += duration + (i === 0 ? .16 : 0);
+        });
+        musicBus.gain.cancelScheduledValues(firstAt);
+        musicBus.gain.setTargetAtTime(prefs.music * .35, firstAt, .035);
+        musicBus.gain.setTargetAtTime(prefs.music, at + .06, .12);
+      });
     },
     forget(key) { delete resumeAt[key]; },
     set(kind, value) { prefs[kind] = value; apply(); save(); },
@@ -792,7 +820,7 @@ function onFlightEnd(s) {
     if (G.victor !== null) $('#winner-sub').textContent = 'DOUBLE TROUBLE! +30'; // one message, not two banners
     else showBanner('DOUBLE<br>TROUBLE!', '<b>+30</b>', 'double', 2600);
     // Use the recorded announcement at the reveal, even when it also wins the match.
-    if (!Sound.say('voice-double-trouble', 'double-trouble')) Sound.sfx('double');
+    if (G.victor === null && !Sound.say('voice-double-trouble', 'double-trouble')) Sound.sfx('double');
   } else if (o.points && s.halfway) { G.caught = true; G.ball = null; Sound.sfx('catch'); }
   else { Sound.sfx('bounce'); }
   if (G.ball) { G.ball.z = surfaceZ(G.ball.y) + BALL_Z; G.rest = G.ball; G.ball = null; }
@@ -812,13 +840,8 @@ function beginVictory(p) {
   G.match.winner = p; G.victor = p; G.victoryAt = G.clock; G.victoryDone = false;
   $('#winner-name').textContent = G.names[p] + ' WINS!'; $('#winner-sub').textContent = 'STREET CHAMPION';
   $('#winner').hidden = false;
-  Sound.sfx('fanfare');
-  // Spoken win cue: champion's recorded name, then WINS!
-  Sound.say('voice-' + G.names[p].toLowerCase(), 'victory-name');
-  const winningName = G.names[p];
-  setTimeout(() => {
-    if (G.match.winner === p && G.names[p] === winningName) Sound.say('voice-wins', 'victory-wins');
-  }, 950);
+  // The winning hit on the street gets ONLY the recorded 'yeah!'.
+  Sound.say('sfx-yeah', 'victory-street');
 }
 
 /* =====================================================================
@@ -941,6 +964,9 @@ function openCelebration() {
   $('#cele-prompt').hidden = true;
   G.victor = null; G.phase = 'idle'; $('#banner').hidden = true; $('#race').hidden = true; $('#winner').hidden = true;
   setScreen('celebrate');
+  // Start the spoken name, then WINS, only once the celebration is visible.
+  Sound.sequence(['voice-' + G.names[w].toLowerCase(), 'voice-wins'],
+    () => G.screen === 'celebrate' && Cele.winner === w);
 }
 const CELE_CHANTS = ['WHAT A CHAMP!', 'LEGEND!', '99s ON ME!'];
 function renderCelebrate(dt) {
@@ -1614,7 +1640,7 @@ function setScreen(name) {
   G.screen = name; if (G.soundOpen) openSound(false);
   for (const id of ['boot', 'select', 'game', 'celebrate']) $('#' + id).hidden = name !== id;
   if (name === 'select') { resetSelect(); sizeSelect(); Sound.decode('game'); ['phil', 'kim', 'rose', 'shay', 'bounce', 'versus'].forEach((n) => Sound.decode('voice-' + n)); }
-  if (name === 'game') { ['pinky', 'win', 'voice-noodles', 'voice-pinkys', 'voice-wins', 'voice-double-trouble'].forEach((k) => Sound.decode(k)); hud(); }
+  if (name === 'game') { ['pinky', 'win', 'voice-noodles', 'voice-pinkys', 'voice-wins', 'voice-double-trouble', 'sfx-yeah'].forEach((k) => Sound.decode(k)); hud(); }
 }
 function desiredMusic() {
   if (G.screen === 'boot') return 'intro';
@@ -1622,7 +1648,7 @@ function desiredMusic() {
   if (G.screen === 'celebrate') return 'win';
   if (G.screen === 'game') {
     if (G.phase === 'pinky' && G.pinky) return ['depart', 'done'].includes(G.pinky.stage) ? null : 'pinky';
-    return G.victor !== null ? 'win' : 'game'; // the winning hit swaps in the winning music
+    return G.victor !== null ? null : 'game'; // win music begins on celebration only
   }
   return null;
 }
