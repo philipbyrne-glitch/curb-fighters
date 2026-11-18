@@ -1,24 +1,25 @@
-CURB FIGHTERS — VS + VICTORY AUDIO POLISH
+CURB FIGHTERS — TWO MISSING FIXES ONLY
 
-Three changes:
-1. VS zooms in from the centre on the character-select screen.
-2. On winning a shot, ONLY the supplied 1.72s yeah.mp3 plays on the gameplay street.
-   Existing synth fanfare and spoken winner name no longer play on the street.
-   Win theme begins on the celebration scene.
-3. On entering celebration, the recorded winner's name THEN the recorded WINS!
-   play strictly sequentially, paced by their real audio sample durations.
-   Existing voices are stopped at the transition to avoid overlapping recordings.
-   Winning Double Trouble no longer announces over the street 'yeah!'.
+Verified base repo contains the corrected isometric Pinky's street shadow and
+the latest VS/victory audio flow. This update leaves them unchanged.
 
-No changes to gameplay fairness, mouth positions, Pinky's van shadows,
-countdown or the separate victory scene's artwork.
+CHANGES
+1) Mouth Y source pixels go UP by 5 for all avatars:
+   Phil 44->39, Shay 39->34, Rose 46->41, Kim 45->40.
+   X positions and mouth dimensions do not change.
+
+2) In a running match, type P I N K Y S (within 1.2 seconds between letters)
+   to invoke Pinky's full normal encounter immediately.
+   It's hidden; no on-screen cheat controls. Doesn't work in selection,
+   celebration, dialogs or after a winner is declared.
+   Note: P is also Player 2's normal action key; the first letter can still
+   perform P2's action. The N in the sequence will NOT spend NOODLES.
 
 INSTALL
-1. Unzip and MERGE .github and tools with the existing repository.
-   DO NOT REPLACE those entire folders.
-2. Commit + Push origin with GitHub Desktop.
-3. Run 'Install VS and victory audio polish' in GitHub Actions on main.
-4. When the workflow is green, run 'Publish Curb Fighters to GoDaddy'.
+1. Unzip. MERGE tools and .github folders into your cloned repository.
+   Do NOT replace folders wholesale.
+2. Commit and Push origin with GitHub Desktop.
+3. GitHub > Actions > 'Install calibrated mouths and Pinkys shortcut' > Run workflow.
+4. After a green workflow, run 'Publish Curb Fighters to GoDaddy' separately.
 
-The workflow copies tools/audio/yeah.mp3 into assets/built/sfx-yeah.mp3,
-updates the audio manifest and rebuilds standalone index.html.
+No pip packages are required. The action makes a new source/build commit.
