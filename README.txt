@@ -1,22 +1,18 @@
-CURB FIGHTERS — SHAY & KIM MOUTH POSITION TUNE
+Curb Fighters — fine-tune Kim and Shay mouths
 
-This update changes only the mouth Y coordinate array:
-   BEFORE: [39, 34, 41, 40]
-   AFTER:  [39, 29, 41, 30]
-Avatar sprite order: Phil, Shay, Rose, Kim.
+Exact source-pixel changes:
+  Avatar        Before X,Y     After X,Y
+  Phil          28,39          28,39 (unchanged)
+  Shay          33,29          33,40 (11 down)
+  Rose          32,41          32,41 (unchanged)
+  Kim           31,30          33,36 (2 right, 6 down)
 
-Phil and Rose remain completely unchanged.
-Shay moves 5 source pixels up.
-Kim moves 10 source pixels up.
-
-No changes to X positions, mouth widths/heights, the neck seam, shadows,
-hidden pinkys shortcut, sound, animation timing, or gameplay.
+All mouth widths/heights stay unchanged.
+No changes to shadows, audio, game logic or the hidden "pinkys" shortcut.
 
 INSTALL
-1. Unzip and MERGE (do not replace) the tools and .github folders into
-   your existing repository.
-2. Commit and Push origin in GitHub Desktop.
-3. Run GitHub Actions > "Tune Shay and Kim eating mouths" on main.
-4. After green, run "Publish Curb Fighters to GoDaddy" separately.
-
-The workflow refuses to overwrite different/newer mouth coordinates.
+1. Unzip and merge BOTH .github and tools into the existing repository.
+   Do not replace either existing directory.
+2. Commit and Push origin from GitHub Desktop.
+3. GitHub Actions → "Adjust Kim and Shay mouth positions" → Run workflow.
+4. Once green, run "Publish Curb Fighters to GoDaddy" separately.
