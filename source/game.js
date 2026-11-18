@@ -378,16 +378,18 @@ function blitHead(c, key, x, y, f = 1) {
 }
 // Four individual 52x46 mouth-open frames; generated from each character's
 // original head sprite so hair, eyes, glasses and outlines remain pixel perfect.
+// CURBS_SHADOW_MOUTH_SWAP_V1: user-calibrated mouth geometry + screenshot-guide vertical correction.
 const EatOpenHeads = Array.from({ length: 4 }, (_, av) => {
   const canv = makeCanvas(META.heads.w, META.heads.h), cc = canv.getContext('2d');
   cc.imageSmoothingEnabled = false;
-  const k = META.eat[av].head;
-  blitHead(cc, k, 0, 0);
-  // PINKY_RACE_ANIMATION_FIX_V1: tuned per-character mouth anchors
-  const mx = [31, 31, 31, 31][av], my = [34, 33, 34, 34][av];
-  cc.fillStyle = '#3b1c34'; cc.fillRect(mx - 2, my - 1, 6, 5); // open mouth
-  cc.fillStyle = '#f9eee4'; cc.fillRect(mx - 1, my, 4, 1);     // top teeth
-  cc.fillStyle = '#c85d76'; cc.fillRect(mx, my + 2, 2, 1);     // tongue
+  blitHead(cc, META.eat[av].head, 0, 0);
+  // Avatar sprite order: Phil, Shay, Rose, Kim.
+  const mx = [28, 33, 32, 31][av], my = [44, 39, 46, 45][av];
+  const mw = [7, 6, 8, 6][av], mh = [5, 4, 4, 5][av];
+  const left = mx - Math.floor(mw / 2), top = my - 1;
+  cc.fillStyle = '#3b1c34'; cc.fillRect(left, top, mw, mh);
+  cc.fillStyle = '#f9eee4'; cc.fillRect(left + 1, my, Math.max(1, mw - 2), 1);
+  cc.fillStyle = '#c85d76'; cc.fillRect(mx - 1, my + mh - 3, Math.min(3, mw - 1), 1);
   return canv;
 });
 function drawHead(c, i, o = {}, flip = false) {
@@ -575,6 +577,25 @@ function actorOptions(i, t, pos) {
   return o;
 }
 
+// CURBS_SHADOW_MOUTH_SWAP_V1: van-specific main street shadow; no effect on race/celebration.
+function drawStreetPinkyShadow(p, zoom) {
+  const pts = [[357,288],[471,316],[531,351],[466,373],[410,375],[238,334]];
+  // Reference calibration was drawn in the 836x470 street preview around (418,374).
+  // Rescale into the perspective street van's footprint and attach to its feet.
+  ctx.save();
+  ctx.globalAlpha = 0.22;
+  ctx.fillStyle = '#21233b';
+  ctx.beginPath();
+  pts.forEach(([px, py], i) => {
+    const x = Math.round(p.x + (px - 418) * .65 * zoom);
+    const y = Math.round(p.y + (py - 374) * .32 * zoom);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
 function drawScene(t) {
   renderGround();
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false;
@@ -624,7 +645,8 @@ function drawScene(t) {
   if (G.phase === 'pinky' && G.pinky) {
     const tx = Pinky.truckX(G.pinky, t);
     if (tx !== null) add(tx, 0, () => {
-      shadow(tx, 0, 83, 21); const p = project(tx, 0);
+      const p = project(tx, 0);
+      drawStreetPinkyShadow(p, zm);
       drawTruck(ctx, p.x, p.y, ['serve', 'countdown', 'race', 'result', 'return'].includes(G.pinky.stage), zm);
       if (G.pinky.stage === 'depart') drawExhaust(t - G.pinky.stageStart, zm);
     });
@@ -1098,17 +1120,8 @@ function drawRaceScene(e, t) {
   // Pinky's van parked along the road behind them, rocking on its springs while he cheers.
   const V = META.vanSide, rocking = (e.stage === 'race' || e.stage === 'result') && !REDUCED ? Math.floor(t / 260) % 2 : 0;
   const vx = Math.round(418 - V.w / 2), vy = 374 - V.h - rocking;
-  // PINKY_STREET_SHADOW_POLYGON_V1: calibrated street/race shadow ONLY (celebration ellipse unchanged).
-  c.save();
-  c.globalAlpha = 0.22;
-  c.fillStyle = '#21233b';
-  const streetShadowPoints = [[357,288],[471,316],[531,351],[466,373],[410,375],[238,334]];
-  c.beginPath();
-  c.moveTo(streetShadowPoints[0][0], streetShadowPoints[0][1]);
-  for (let j = 1; j < streetShadowPoints.length; j++) c.lineTo(streetShadowPoints[j][0], streetShadowPoints[j][1]);
-  c.closePath();
-  c.fill();
-  c.restore();
+  // Ice-cream race keeps its original parked-van ellipse.
+  c.fillStyle = '#2a204055'; c.beginPath(); c.ellipse(418, 372, 150, 9, 0, 0, Math.PI * 2); c.fill();
   c.drawImage(IMG.vanSide, vx, vy);
   drawChant(c, vx + V.face[0], vy + V.face[1], vy, raceChant(e, t), t);
   for (let i = 0; i < 2; i++) drawEater(c, i === 0 ? 214 : 622, 460, i, e, t);
