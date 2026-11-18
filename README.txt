@@ -1,25 +1,22 @@
-CURB FIGHTERS — TWO MISSING FIXES ONLY
+CURB FIGHTERS — SHAY & KIM MOUTH POSITION TUNE
 
-Verified base repo contains the corrected isometric Pinky's street shadow and
-the latest VS/victory audio flow. This update leaves them unchanged.
+This update changes only the mouth Y coordinate array:
+   BEFORE: [39, 34, 41, 40]
+   AFTER:  [39, 29, 41, 30]
+Avatar sprite order: Phil, Shay, Rose, Kim.
 
-CHANGES
-1) Mouth Y source pixels go UP by 5 for all avatars:
-   Phil 44->39, Shay 39->34, Rose 46->41, Kim 45->40.
-   X positions and mouth dimensions do not change.
+Phil and Rose remain completely unchanged.
+Shay moves 5 source pixels up.
+Kim moves 10 source pixels up.
 
-2) In a running match, type P I N K Y S (within 1.2 seconds between letters)
-   to invoke Pinky's full normal encounter immediately.
-   It's hidden; no on-screen cheat controls. Doesn't work in selection,
-   celebration, dialogs or after a winner is declared.
-   Note: P is also Player 2's normal action key; the first letter can still
-   perform P2's action. The N in the sequence will NOT spend NOODLES.
+No changes to X positions, mouth widths/heights, the neck seam, shadows,
+hidden pinkys shortcut, sound, animation timing, or gameplay.
 
 INSTALL
-1. Unzip. MERGE tools and .github folders into your cloned repository.
-   Do NOT replace folders wholesale.
-2. Commit and Push origin with GitHub Desktop.
-3. GitHub > Actions > 'Install calibrated mouths and Pinkys shortcut' > Run workflow.
-4. After a green workflow, run 'Publish Curb Fighters to GoDaddy' separately.
+1. Unzip and MERGE (do not replace) the tools and .github folders into
+   your existing repository.
+2. Commit and Push origin in GitHub Desktop.
+3. Run GitHub Actions > "Tune Shay and Kim eating mouths" on main.
+4. After green, run "Publish Curb Fighters to GoDaddy" separately.
 
-No pip packages are required. The action makes a new source/build commit.
+The workflow refuses to overwrite different/newer mouth coordinates.
