@@ -412,7 +412,8 @@ const EatOpenHeads = Array.from({ length: 4 }, (_, av) => {
   cc.imageSmoothingEnabled = false;
   blitHead(cc, META.eat[av].head, 0, 0);
   // Avatar sprite order: Phil, Shay, Rose, Kim.
-  const mx = [28, 33, 32, 31][av], my = [44, 39, 46, 45][av];
+  // CURBS_EXACT_CALIBRATED_MOUTHS_V1: exactly the Sprite Lab values; Phil, Shay, Rose, Kim.
+  const mx = [28, 33, 32, 31][av], my = [39, 34, 41, 40][av];
   const mw = [7, 6, 8, 6][av], mh = [5, 4, 4, 5][av];
   const left = mx - Math.floor(mw / 2), top = my - 1;
   cc.fillStyle = '#3b1c34'; cc.fillRect(left, top, mw, mh);
@@ -1404,8 +1405,32 @@ game.addEventListener('pointerup', (e) => {
 game.addEventListener('pointercancel', () => { if (G.phase === 'dragging') backToReady(); });
 game.addEventListener('contextmenu', (e) => e.preventDefault());
 for (let i = 0; i < 2; i++) $('#noodles' + i).addEventListener('click', () => noodle(i));
+// PINKYS_KEYBOARD_SECRET_V2: hidden playtest encounter by typing 'pinkys'.
+let pinkysSecret = '', pinkysSecretAt = 0;
+function detectPinkySecret(e) {
+  if (e.defaultPrevented || e.repeat || e.metaKey || e.ctrlKey || e.altKey ||
+      e.isComposing || e.key.length !== 1 || G.screen !== 'game' ||
+      anyDialog() || PORTRAIT.matches || G.victor !== null || G.pinky ||
+      e.target.closest?.('input, textarea, select, [contenteditable]')) return false;
+  const k = e.key.toLowerCase(), now = performance.now();
+  if (now - pinkysSecretAt > 1200) pinkysSecret = '';
+  pinkysSecretAt = now;
+  const next = pinkysSecret + k;
+  pinkysSecret = 'pinkys'.startsWith(next) ? next : k === 'p' ? 'p' : '';
+  if (pinkysSecret === 'pinkys') {
+    pinkysSecret = '';
+    e.preventDefault();
+    Sound.unlock();
+    beginPinky(false);
+    return true;
+  }
+  // Stop NOODLES! on the 'n' of the cheat; P remains a normal Player 2 key.
+  if (pinkysSecret.length >= 2) { e.preventDefault(); return true; }
+  return false;
+}
 document.addEventListener('keydown', (e) => {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (detectPinkySecret(e)) return;
   if (G.screen === 'boot') {
     if (e.target.closest?.('#audio-panel') || ['Tab', 'Shift', 'Escape'].includes(e.key)) return;
     e.preventDefault(); bootStart(); return;
