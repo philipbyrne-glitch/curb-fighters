@@ -578,17 +578,17 @@ function actorOptions(i, t, pos) {
 }
 
 // CURBS_SHADOW_MOUTH_SWAP_V1: van-specific main street shadow; no effect on race/celebration.
+// PINKY_ISO_SHADOW_CALIBRATED_V1: exact calibrated source-pixel polygon, relative to the
+// main gameplay isometric van's shared (123,205) ground anchor.
 function drawStreetPinkyShadow(p, zoom) {
-  const pts = [[357,288],[471,316],[531,351],[466,373],[410,375],[238,334]];
-  // Reference calibration was drawn in the 836x470 street preview around (418,374).
-  // Rescale into the perspective street van's footprint and attach to its feet.
+  const verts = [[-135,-62],[-12,4],[23,6],[106,-29],[-55,-102]];
   ctx.save();
   ctx.globalAlpha = 0.22;
   ctx.fillStyle = '#21233b';
   ctx.beginPath();
-  pts.forEach(([px, py], i) => {
-    const x = Math.round(p.x + (px - 418) * .65 * zoom);
-    const y = Math.round(p.y + (py - 374) * .32 * zoom);
+  verts.forEach(([localX, localY], i) => {
+    const x = Math.round(p.x + localX * zoom);
+    const y = Math.round(p.y + localY * zoom);
     if (i === 0) ctx.moveTo(x, y);
     else ctx.lineTo(x, y);
   });
