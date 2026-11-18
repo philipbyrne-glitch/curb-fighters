@@ -1,0 +1,68 @@
+name: Build and publish Curb Fighters index2
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: curb-fighters-index2-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Check out current game
+        uses: actions/checkout@v4
+
+      - name: Build Kim-free variant independently
+        run: |
+          set -euo pipefail
+          python3 tools/build_no_kim_variant.py
+          test -s index2.html
+          grep -q 'CURBS_THREE_CHARACTER_EDITION_V1' index2.html
+          grep -q 'trafficCars.push(3)' index2.html
+          if grep -q "name: 'KIM'" index2.html; then exit 1; fi
+
+      - name: Unlock deployment SSH key
+        env:
+          DEPLOY_KEY: ${{ secrets.GODADDY_DEPLOY }}
+          DEPLOY_PASSPHRASE: ${{ secrets.GODADDY_SSH_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.ssh"
+          chmod 700 "$HOME/.ssh"
+          printf '%s\n' "$DEPLOY_KEY" > "$HOME/.ssh/deploy_key"
+          chmod 600 "$HOME/.ssh/deploy_key"
+          eval "$(ssh-agent -s)"
+          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
+          echo "SSH_AGENT_PID=$SSH_AGENT_PID" >> "$GITHUB_ENV"
+          cat > "$RUNNER_TEMP/askpass.sh" <<'EOF'
+          #!/bin/sh
+          printf '%s\n' "$DEPLOY_PASSPHRASE"
+          EOF
+          chmod 700 "$RUNNER_TEMP/askpass.sh"
+          export SSH_ASKPASS="$RUNNER_TEMP/askpass.sh"
+          export SSH_ASKPASS_REQUIRE=force
+          export DISPLAY=:0
+          setsid ssh-add "$HOME/.ssh/deploy_key" < /dev/null
+          rm -f "$RUNNER_TEMP/askpass.sh" "$HOME/.ssh/deploy_key"
+
+      - name: Back up previous index2 if present
+        run: |
+          set -euo pipefail
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15 -p 22 \
+            qbifp9pmtlju@92.205.11.109 \
+            'set -eu; cd "$HOME/public_html/curbs/curb-fighters"; if test -f index2.html; then cp -p index2.html "index2.html.backup-$(date +%Y%m%d-%H%M%S)"; fi'
+
+      - name: Upload index2 independently
+        run: |
+          set -euo pipefail
+          scp -o BatchMode=yes -o StrictHostKeyChecking=yes -P 22 \
+            index2.html qbifp9pmtlju@92.205.11.109:public_html/curbs/curb-fighters/index2.html.uploading
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -p 22 \
+            qbifp9pmtlju@92.205.11.109 \
+            'set -eu; cd "$HOME/public_html/curbs/curb-fighters"; test -s index2.html.uploading; mv -f index2.html.uploading index2.html; echo "Published index2.html; index.html was not modified"'

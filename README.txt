@@ -1,18 +1,27 @@
-Curb Fighters — fine-tune Kim and Shay mouths
+CURB FIGHTERS — SECOND EDITION (index2.html)
 
-Exact source-pixel changes:
-  Avatar        Before X,Y     After X,Y
-  Phil          28,39          28,39 (unchanged)
-  Shay          33,29          33,40 (11 down)
-  Rose          32,41          32,41 (unchanged)
-  Kim           31,30          33,36 (2 right, 6 down)
+Creates a second edition of Curb Fighters with:
+- Phil, Shay and Rose in character selection (three-way carousel)
+- Kim excluded from CPU matchmaking
+- Kim excluded from the victory/celebration crowd
+- Kim's Qashqai STILL in passing traffic, as explicitly requested
+- Existing original index.html UNCHANGED
 
-All mouth widths/heights stay unchanged.
-No changes to shadows, audio, game logic or the hidden "pinkys" shortcut.
+The source code remains shared: each time the new workflow runs, it builds
+index2.html from the latest source/game.js and the existing assets, modifying
+the second edition in memory only. Future game fixes carry across automatically
+whenever you republish the second edition.
 
-INSTALL
-1. Unzip and merge BOTH .github and tools into the existing repository.
-   Do not replace either existing directory.
-2. Commit and Push origin from GitHub Desktop.
-3. GitHub Actions → "Adjust Kim and Shay mouth positions" → Run workflow.
-4. Once green, run "Publish Curb Fighters to GoDaddy" separately.
+HOW TO INSTALL AND PUBLISH
+1. Unzip. MERGE tools and .github with your existing cloned repository.
+   Do NOT replace the directories.
+2. Commit + Push origin in GitHub Desktop.
+3. GitHub Actions > "Build and publish Curb Fighters index2" > Run workflow.
+4. After green, visit:
+   https://customereducation.expert/curbs/curb-fighters/index2.html
+
+Note: The normal "Publish Curb Fighters to GoDaddy" action only publishes
+index.html. This new workflow independently publishes index2.html, without
+touching index.html.
+
+The second edition shares sounds, graphics, mechanics and Pinky's sequence.
