@@ -1,24 +1,22 @@
-CURB FIGHTERS — SHADOW SWAP + MOUTH ALIGNMENT
+PINKY'S ISOMETRIC SHADOW — ACTUAL GAMEPLAY VAN
 
-This corrects two problems in the current game:
+Uses the exact five-vertex shadow exported from the isometric Sprite Lab.
+Vertices are in source pixels relative to the van's ground anchor (123,205).
+No ad hoc projection or guessing: the game simply multiplies each vertex by
+view.zoom and offsets it by the existing projected van anchor.
 
-1) MAIN GAMEPLAY STREET: Use your six-point calibrated polygon for Pinky's
-   moving/parked isometric van shadow, scaled as a street-floor footprint.
-2) ICE-CREAM EATING CHALLENGE: Restore the ORIGINAL elliptical shadow
-   (centre 418,372, radii 150,9).
-   VICTORY CELEBRATION: The existing elliptical shadow is NOT changed.
-3) MOUTHS: Use your exported mouth calibrations for all four avatars,
-   correctly mapped Phil / Shay / Rose / Kim, and shift 5 source pixels
-   further downward based on the green/pink lines in your screenshot.
+Shadow colour: #21233b, opacity: 0.22, feather: zero.
 
-Your two source JSON files are included with corrected shadow scope.
-The patch does not change the gameplay balance, audio or countdown.
+The ice-cream eating competition and victory celebration scenes stay AS IS.
+This update ONLY changes the main gameplay street van-shadow helper.
 
 INSTALL
-1. Unzip and MERGE .github and tools into your existing cloned repository.
-   Do NOT replace the entire directories.
-2. Commit and push from GitHub Desktop.
-3. On GitHub Actions, run "Correct van shadows and mouth alignment" on main.
-4. Once green, run "Publish Curb Fighters to GoDaddy" separately.
+1. Unzip and MERGE tools and .github into your current cloned curb-fighters
+   repository. Do not replace the directories.
+2. Commit and Push origin in GitHub Desktop.
+3. Run the GitHub Action "Apply Pinky's isometric street shadow" on main.
+4. After green, separately run "Publish Curb Fighters to GoDaddy."
 
-No additional Python packages required.
+NOTE: As of the repo check, the earlier mouth +5 reset and hidden "pinkys"
+keyboard shortcut had NOT been pushed. This patch deliberately does not
+change either; those are separate pending installations.

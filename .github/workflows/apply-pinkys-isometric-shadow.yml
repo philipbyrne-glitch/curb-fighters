@@ -1,0 +1,40 @@
+name: Apply Pinky's isometric street shadow
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: curbs-pinky-isometric-shadow
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: true
+      - name: Apply calibrated shadow and rebuild
+        run: |
+          set -euo pipefail
+          python3 tools/apply_pinkys_iso_shadow.py
+          node --check source/game.js
+          python3 tools/build.py
+          test -s index.html
+          grep -q 'PINKY_ISO_SHADOW_CALIBRATED_V1' index.html
+      - name: Commit update
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add source/game.js index.html
+          if ! git diff --cached --quiet; then
+            git commit -m "Apply calibrated Pinky's isometric gameplay shadow"
+            git push origin HEAD:main
+          fi

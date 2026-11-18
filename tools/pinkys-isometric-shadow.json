@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "project": "Curb Fighters",
+  "feature": "pinkys-main-street-isometric-van-shadow",
+  "appliesTo": [
+    "main-gameplay-street"
+  ],
+  "sprite": "assets/built/pinky.png",
+  "sourceRect": [
+    248,
+    0,
+    246,
+    217
+  ],
+  "anchorInSprite": [
+    123,
+    205
+  ],
+  "coordinateSystem": "van-ground-anchor-local-source-pixels",
+  "vertices": [
+    [
+      -135,
+      -62
+    ],
+    [
+      -12,
+      4
+    ],
+    [
+      23,
+      6
+    ],
+    [
+      106,
+      -29
+    ],
+    [
+      -55,
+      -102
+    ]
+  ],
+  "tint": "#21233b",
+  "opacity": 0.22,
+  "featherPx": 0,
+  "notes": "Coordinates are local to the isometric gameplay van anchor; apply zoom when drawing; never apply to ice cream challenge or celebration."
+}
