@@ -1,0 +1,35 @@
+{
+  "version": 2,
+  "project": "Curb Fighters",
+  "spriteSource": "built/heads_q.png",
+  "headPixelSize": [
+    52,
+    46
+  ],
+  "characters": {
+    "phil": {
+      "x": 28,
+      "y": 39,
+      "w": 7,
+      "h": 5
+    },
+    "kim": {
+      "x": 31,
+      "y": 40,
+      "w": 6,
+      "h": 5
+    },
+    "rose": {
+      "x": 32,
+      "y": 41,
+      "w": 8,
+      "h": 4
+    },
+    "shay": {
+      "x": 33,
+      "y": 34,
+      "w": 6,
+      "h": 4
+    }
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "project": "Curb Fighters",
+  "feature": "pinkys-parked-van-shadow",
+  "sceneSize": [
+    836,
+    470
+  ],
+  "appliesTo": [
+    "main-gameplay-street"
+  ],
+  "shape": "polygon",
+  "points": [
+    [
+      357,
+      288
+    ],
+    [
+      471,
+      316
+    ],
+    [
+      531,
+      351
+    ],
+    [
+      466,
+      373
+    ],
+    [
+      410,
+      375
+    ],
+    [
+      238,
+      334
+    ]
+  ],
+  "opacity": 0.22,
+  "featherPx": 0,
+  "tint": "#21233b",
+  "previousShadow": {
+    "shape": "ellipse",
+    "center": [
+      418,
+      372
+    ],
+    "radii": [
+      150,
+      9
+    ]
+  }
+}

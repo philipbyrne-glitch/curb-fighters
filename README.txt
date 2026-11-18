@@ -1,18 +1,24 @@
-PINKY'S VAN — STREET SCENE SHADOW ONLY
+CURB FIGHTERS — SHADOW SWAP + MOUTH ALIGNMENT
 
-Uses your uploaded six-point polygon (opacity 0.22, tint #21233b, no feathering).
-The JSON metadata has been intentionally restricted to ice-cream-race.
+This corrects two problems in the current game:
 
-IMPORTANT: The victory CELEBRATION scene ellipse is deliberately unchanged.
-The patch targets the drawRaceScene() function only and asserts the separate
-celebration ellipse is still present afterwards.
+1) MAIN GAMEPLAY STREET: Use your six-point calibrated polygon for Pinky's
+   moving/parked isometric van shadow, scaled as a street-floor footprint.
+2) ICE-CREAM EATING CHALLENGE: Restore the ORIGINAL elliptical shadow
+   (centre 418,372, radii 150,9).
+   VICTORY CELEBRATION: The existing elliptical shadow is NOT changed.
+3) MOUTHS: Use your exported mouth calibrations for all four avatars,
+   correctly mapped Phil / Shay / Rose / Kim, and shift 5 source pixels
+   further downward based on the green/pink lines in your screenshot.
+
+Your two source JSON files are included with corrected shadow scope.
+The patch does not change the gameplay balance, audio or countdown.
 
 INSTALL
-1. Unzip, then MERGE .github and tools into your cloned curb-fighters repo.
-   Do not replace either existing folder.
-2. Commit + Push origin in GitHub Desktop.
-3. GitHub > Actions > "Apply Pinky's street shadow" > Run workflow (main).
-4. Wait for green. This creates a new game commit and rebuilds index.html.
-5. Run the separate "Publish Curb Fighters to GoDaddy" workflow to go live.
+1. Unzip and MERGE .github and tools into your existing cloned repository.
+   Do NOT replace the entire directories.
+2. Commit and push from GitHub Desktop.
+3. On GitHub Actions, run "Correct van shadows and mouth alignment" on main.
+4. Once green, run "Publish Curb Fighters to GoDaddy" separately.
 
-No Python packages required.
+No additional Python packages required.
