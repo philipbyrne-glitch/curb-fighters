@@ -1,0 +1,43 @@
+name: Install VS and victory audio polish
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: curb-fighters-vs-victory-audio
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: true
+      - name: Apply update and rebuild
+        run: |
+          set -euo pipefail
+          python3 tools/apply_vs_victory_audio.py
+          node --check source/game.js
+          python3 tools/build.py
+          test -s assets/built/sfx-yeah.mp3
+          test -s index.html
+          grep -q 'CURBS_VICTORY_AUDIO_FLOW_V1' index.html
+          grep -q 'aud-sfx-yeah' index.html
+          grep -q 'vs-center-zoom' index.html
+      - name: Commit updated game
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add source/game.js source/style.css tools/build.py assets/built/sfx-yeah.mp3 index.html
+          if ! git diff --cached --quiet; then
+            git commit -m "Center VS zoom and separate street yeah from victory announcement"
+            git push origin HEAD:main
+          fi
