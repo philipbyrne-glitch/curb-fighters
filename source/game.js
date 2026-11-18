@@ -1098,7 +1098,17 @@ function drawRaceScene(e, t) {
   // Pinky's van parked along the road behind them, rocking on its springs while he cheers.
   const V = META.vanSide, rocking = (e.stage === 'race' || e.stage === 'result') && !REDUCED ? Math.floor(t / 260) % 2 : 0;
   const vx = Math.round(418 - V.w / 2), vy = 374 - V.h - rocking;
-  c.fillStyle = '#2a204055'; c.beginPath(); c.ellipse(418, 372, 150, 9, 0, 0, Math.PI * 2); c.fill();
+  // PINKY_STREET_SHADOW_POLYGON_V1: calibrated street/race shadow ONLY (celebration ellipse unchanged).
+  c.save();
+  c.globalAlpha = 0.22;
+  c.fillStyle = '#21233b';
+  const streetShadowPoints = [[357,288],[471,316],[531,351],[466,373],[410,375],[238,334]];
+  c.beginPath();
+  c.moveTo(streetShadowPoints[0][0], streetShadowPoints[0][1]);
+  for (let j = 1; j < streetShadowPoints.length; j++) c.lineTo(streetShadowPoints[j][0], streetShadowPoints[j][1]);
+  c.closePath();
+  c.fill();
+  c.restore();
   c.drawImage(IMG.vanSide, vx, vy);
   drawChant(c, vx + V.face[0], vy + V.face[1], vy, raceChant(e, t), t);
   for (let i = 0; i < 2; i++) drawEater(c, i === 0 ? 214 : 622, 460, i, e, t);
