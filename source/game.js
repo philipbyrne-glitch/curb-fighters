@@ -1294,7 +1294,10 @@ function update(dt) {
   view.camera += (view.target - view.camera) * Math.min(1, dt * .005);
   if (Math.abs(view.target - view.camera) < .0005) view.camera = view.target;
   const close = m.halfway && !['traffic', 'pinky'].includes(P) && G.victor === null;
-  const zt = close ? 1.5 : 1, ft = close ? (m.player === 0 ? -1 : 1) : 0;
+  // Physical screen dimensions distinguish phones from iPads, even in landscape.
+  const phoneScreen = Math.min(window.screen.width, window.screen.height) <= 600;
+  const phoneZoom = phoneScreen ? 1.25 : 1;
+  const zt = (close ? 1.5 : 1) * phoneZoom, ft = close ? (m.player === 0 ? -1 : 1) : 0;
   view.zoom += (zt - view.zoom) * Math.min(1, dt * .004); view.focus += (ft - view.focus) * Math.min(1, dt * .004);
   if (Math.abs(zt - view.zoom) < .0005) view.zoom = zt;
   if (Math.abs(ft - view.focus) < .0005) view.focus = ft;
