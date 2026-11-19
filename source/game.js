@@ -12,6 +12,9 @@ const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const COARSE = matchMedia('(pointer: coarse)').matches;
 const PORTRAIT = matchMedia('(max-width: 700px) and (orientation: portrait)');
 const anyDialog = () => !!document.querySelector('dialog[open]');
+const THREE_CHARACTER_VERSION = window.CF_THREE_CHARACTER_VERSION === true;
+const SELECTABLE_AVATARS = THREE_CHARACTER_VERSION ? [0, 1, 2] : [0, 1, 2, 3];
+const SELECT_STEP = Math.PI * 2 / SELECTABLE_AVATARS.length;
 const CHARACTERS = [
   { name: 'PHIL', desc: 'Bald, black glasses, white T-shirt and blue trousers' },
   { name: 'SHAY', desc: 'Blond hair, yellow-and-white striped T-shirt, teal shorts and red trainers' },
@@ -996,8 +999,8 @@ function renderCelebrate(dt) {
   c.drawImage(IMG.vanSide, vx, vy);
   drawChant(c, vx + V.face[0], vy + V.face[1], vy, CELE_CHANTS[Math.floor(t / 1500) % CELE_CHANTS.length], t, true);
   // the family on the road, everyone celebrating, the winner lifting the golden ball
-  const winAv = G.avatars[Cele.winner], others = [0, 1, 2, 3].filter((k) => k !== winAv);
-  [165, 295, 652].forEach((x, k) => {
+  const winAv = G.avatars[Cele.winner], others = SELECTABLE_AVATARS.filter((k) => k !== winAv);
+  (THREE_CHARACTER_VERSION ? [215, 652] : [165, 295, 652]).forEach((x, k) => {
     const av = others[k], arms = Math.floor((t + k * 450) / 900) % 2 === 0;
     shade(x, 452, 26);
     drawCharacter(c, x, 452, av, { scale: 3.6, arms, punch: !arms, time: t + k * 130, jump: hop(k + 4, 3), flip: x > 418 });
@@ -1507,12 +1510,12 @@ $('#restart-confirm').addEventListener('click', () => { $('#restart').close(); G
 /* =====================================================================
    13. CHOOSE YOUR CHAMPION
    ===================================================================== */
-const Select = { locked: false, reveal: null, timers: [], picks: [0, 1], angles: [0, Math.PI / 2], cheerAt: [-1e9, -1e9], buttons: [[], []], gesture: [null, null], suppress: [false, false], time: 0 };
+const Select = { locked: false, reveal: null, timers: [], picks: [0, 1], angles: [0, SELECT_STEP], cheerAt: [-1e9, -1e9], buttons: [[], []], gesture: [null, null], suppress: [false, false], time: 0 };
 const outlineTmp = makeCanvas(128, 112), outlineGold = makeCanvas(128, 112);
 function buildSelect() {
   for (let p = 0; p < 2; p++) {
     const stage = $('#carousel' + p);
-    for (let k = 0; k < 4; k++) {
+    for (let k of SELECTABLE_AVATARS) {
       const b = document.createElement('button'); b.type = 'button'; b.className = 'champ';
       b.setAttribute('aria-label', 'Player ' + (p + 1) + ': ' + CHARACTERS[k].name + '. ' + CHARACTERS[k].desc);
       const c = makeCanvas(128, 112); b.append(c);
@@ -1527,14 +1530,14 @@ function buildSelect() {
       const g = Select.gesture[p]; if (!g || g.id !== e.pointerId) return;
       const dx = e.clientX - g.x;
       if (!g.moved && Math.abs(dx) > 8) { g.moved = true; try { stage.setPointerCapture(e.pointerId); } catch { /* ignore */ } stage.classList.add('dragging'); }
-      if (g.moved) { e.preventDefault(); Select.angles[p] = g.start - dx / Math.max(100, stage.clientWidth * .5) * Math.PI / 2; }
+      if (g.moved) { e.preventDefault(); Select.angles[p] = g.start - dx / Math.max(100, stage.clientWidth * .5) * SELECT_STEP; }
     });
     const finish = (e) => {
       const g = Select.gesture[p]; if (!g || g.id !== e.pointerId) return;
       if (g.moved) {
         const dx = e.clientX - g.x; let step = Math.round(-dx / Math.max(100, stage.clientWidth * .5));
         if (!step && Math.abs(dx) > 28) step = dx < 0 ? 1 : -1;
-        choose(p, Math.round(g.start / (Math.PI / 2)) + step);
+        choose(p, Math.round(g.start / SELECT_STEP) + step);
         Select.suppress[p] = true; setTimeout(() => { Select.suppress[p] = false; }, 0);
       }
       Select.gesture[p] = null; stage.classList.remove('dragging');
@@ -1551,7 +1554,7 @@ function buildSelect() {
 }
 function choose(p, k) {
   if ((p === 1 && G.cpu) || Select.locked) return;
-  Select.picks[p] = ((k % 4) + 4) % 4; Select.cheerAt[p] = performance.now();
+  Select.picks[p] = ((k % SELECTABLE_AVATARS.length) + SELECTABLE_AVATARS.length) % SELECTABLE_AVATARS.length; Select.cheerAt[p] = performance.now();
   Sound.unlock(); Sound.sfx('tick', Select.picks[p]); syncNames(); // just a tick: names are called once chosen
 }
 function setCpu(on) {
@@ -1580,8 +1583,8 @@ function go() {
   Select.locked = true;
   G.avatars = [Select.picks[0], Select.picks[1]];
   if (G.cpu) {
-    const pool = [0, 1, 2, 3].filter((i) => i !== G.avatars[0]); G.avatars[1] = pool[Math.floor(Math.random() * pool.length)];
-    Select.reveal = G.avatars[1]; Select.picks[1] = G.avatars[1]; Select.angles[1] = G.avatars[1] * Math.PI / 2; // the CPU steps out of the shadows
+    const pool = SELECTABLE_AVATARS.filter((i) => i !== G.avatars[0]); G.avatars[1] = pool[Math.floor(Math.random() * pool.length)];
+    Select.reveal = G.avatars[1]; Select.picks[1] = G.avatars[1]; Select.angles[1] = G.avatars[1] * SELECT_STEP; // the CPU steps out of the shadows
   }
   G.names = [CHARACTERS[G.avatars[0]].name, CHARACTERS[G.avatars[1]].name];
   syncNames(); Sound.unlock();
@@ -1630,12 +1633,12 @@ function renderSelect(dt) {
   const s = Math.max(innerWidth / 836, innerHeight / 470), top = innerHeight - 470 * s, now = performance.now();
   const rowPct = (yb) => (top + yb * s) / innerHeight * 100;
   for (let p = 0; p < 2; p++) {
-    const target = Select.picks[p] * Math.PI / 2;
+    const target = Select.picks[p] * SELECT_STEP;
     if (p === 1 && G.cpu && Select.reveal === null) Select.angles[1] = (Select.angles[1] + dt * .00065) % (Math.PI * 2);
     else if (!Select.gesture[p]?.moved) { const diff = Math.atan2(Math.sin(target - Select.angles[p]), Math.cos(target - Select.angles[p])); Select.angles[p] += REDUCED ? diff : diff * Math.min(1, dt * .012); }
     const cx = p === 0 ? 46 : 54, skew = p === 0 ? 7 : -7;
     Select.buttons[p].forEach(({ b, c, x }, k) => {
-      const a = k * Math.PI / 2 - Select.angles[p], front = Math.cos(a), side = Math.sin(a), depth = (front + 1) / 2;
+      const a = k * SELECT_STEP - Select.angles[p], front = Math.cos(a), side = Math.sin(a), depth = (front + 1) / 2;
       const isFront = front > .92;
       b.style.left = (cx + side * 25 + (1 - front) * skew) + '%';
       b.style.top = rowPct(346 + depth * 58) + '%';
