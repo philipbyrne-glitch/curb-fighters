@@ -421,3 +421,15 @@ dialog .keys { color: var(--blush); }
 /* When NOODLES causes a miss, keep only the smaller score feedback. */
 .float.small-only { font-size: clamp(14px, min(2.6vw, 5vh), 28px); }
 .float.small-only small { font-size: .5em; }
+
+/* Phone-only: keep the turn prompt lightweight and 5px lower. */
+@media (max-height: 600px) and (pointer: coarse) {
+  .hint {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    padding: 5px 0;
+    transform: translate(-50%, 5px);
+    text-shadow: 1px 2px 0 #202548, -1px -1px 0 #202548, 2px 2px 0 #202548;
+  }
+}
