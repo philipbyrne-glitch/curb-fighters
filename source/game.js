@@ -4,6 +4,8 @@
    0. UTILITIES
    ===================================================================== */
 const CF = window.CF_DATA;
+const EXCLAMATIONS = window.CF_EXCLAMATIONS || {};
+const phrase = (category, fallback, index = 0) => { const choices = EXCLAMATIONS[category]; return Array.isArray(choices) && choices.length ? choices[index % choices.length] : fallback; };
 const $ = (s) => document.querySelector(s);
 const clamp = (v, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, v));
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -30,18 +32,18 @@ const Rules = {
   WIN: 100,
   // A successful 5-pointer makes the next halfway attempt tougher: 15% of the
   // original width per extra shot, capped at 40% to keep a realistic sweet spot.
-  halfwayScale: (fiveStreak = 0) => Math.max(.4, 1 - .15 * Math.max(0, fiveStreak)),
-  green: (halfway, fiveStreak = 0) => {
+  halfwayScale: (fiveStreak = 0, leading = false) => Math.max(.4, 1 - (leading ? .225 : .15) * Math.max(0, fiveStreak)),
+  green: (halfway, fiveStreak = 0, leading = false) => {
     const base = halfway ? { power: [.42, .64], aim: [.41, .59] } : { power: [.50, .84], aim: [.36, .64] };
     if (!halfway || fiveStreak === 0) return base;
-    const scale = Rules.halfwayScale(fiveStreak);
+    const scale = Rules.halfwayScale(fiveStreak, leading);
     const shrink = ([lo, hi]) => { const mid = (lo + hi) / 2, half = (hi - lo) * scale / 2; return [mid - half, mid + half]; };
     return { power: shrink(base.power), aim: shrink(base.aim) };
   },
-  fringe: (halfway, fiveStreak = 0) => halfway ? .03 * Rules.halfwayScale(fiveStreak) : .04,
+  fringe: (halfway, fiveStreak = 0, leading = false) => halfway ? .03 * Rules.halfwayScale(fiveStreak, leading) : .04,
   gold: (boosted) => boosted ? { power: [.52, .82], aim: [.38, .62] } : { power: [.735, .755], aim: [.475, .525] },
-  judge(power, aim, halfway, boosted, roll = Math.random(), fiveStreak = 0) {
-    const g = Rules.green(halfway, fiveStreak), fr = Rules.fringe(halfway, fiveStreak);
+  judge(power, aim, halfway, boosted, roll = Math.random(), fiveStreak = 0, leading = false) {
+    const g = Rules.green(halfway, fiveStreak, leading), fr = Rules.fringe(halfway, fiveStreak, leading);
     const inside = (v, [lo, hi]) => v >= lo && v <= hi;
     const near = (v, [lo, hi]) => v >= lo - fr && v <= hi + fr;
     let p = power, a = aim, chance = false;
@@ -58,8 +60,8 @@ const Rules = {
     if (!halfway) { const d = Rules.gold(boosted); if (inside(p, d.power) && inside(a, d.aim)) return { points: 30, kind: 'double', chance }; }
     return { points: halfway ? 5 : 10, kind: 'hit', chance };
   },
-  cpuPlan(halfway, rng = Math.random, fiveStreak = 0) {
-    const z = Rules.green(halfway, fiveStreak), success = rng() < (halfway ? .53 : .65);
+  cpuPlan(halfway, rng = Math.random, fiveStreak = 0, leading = false) {
+    const z = Rules.green(halfway, fiveStreak, leading), success = rng() < (halfway ? .53 : .65);
     // Keep the CPU's aiming margins proportional to the increasingly tight zone.
     const pMargin = (z.power[1] - z.power[0]) * .09;
     const aMargin = (z.aim[1] - z.aim[0]) * .14;
@@ -805,9 +807,12 @@ function ballAt(s, f) {
   if (o.points && s.halfway) return { x: lerp(s.hitX, s.hand.x, q), y: lerp(s.hitY, s.hand.y, q), z: lerp(R, s.hand.z, q) + arc * .2 };
   if (o.points) return { x: s.hitX, y: lerp(s.hitY, s.hitY + s.sg * 1.7, q), z: R + arc * .8 };
   const endY = s.hitY - s.sg * .4;
-  return { x: s.hitX + (o.kind === 'wide' ? q * .6 * o.side * s.sg : 0), y: lerp(s.hitY, endY, q), z: surfaceZ(lerp(s.hitY, endY, q)) + R + arc * .5 };
+  // An extra small bounce as the missed ball settles onto the pavement.
+  const smallBounce = q > .65 ? Math.sin((q - .65) / .35 * Math.PI) * .16 : 0;
+  return { x: s.hitX + (o.kind === 'wide' ? q * .6 * o.side * s.sg : 0), y: lerp(s.hitY, endY, q), z: surfaceZ(lerp(s.hitY, endY, q)) + R + arc * .5 + smallBounce };
 }
 const HIT_WORDS = ['LOVELY CURB!', 'CRACKING!', 'GET IN!', 'TEXTBOOK!', 'CLASSIC!'];
+const isLeading = () => G.match.scores[G.match.player] > G.match.scores[1 - G.match.player];
 function onImpact(s) {
   const o = s.outcome;
   s.revealed = true;
@@ -815,13 +820,17 @@ function onImpact(s) {
     Sound.sfx('curb');
     const first = o.kind === 'double' ? 10 : o.points; // a Double Trouble looks like any curb until it comes home
     const m = G.match, winning = m.winner === null && m.scores[m.player] + first >= Rules.WIN;
-    if (!winning) showFloat('+' + first, s.halfway ? 'KEEP IT GOING!' : HIT_WORDS[G.throwNo % HIT_WORDS.length]); // a winning hit is announced by the win itself
+    if (!winning) showFloat('+' + first, s.halfway ? phrase('streak', 'KEEP IT GOING!', G.throwNo) : phrase('hit', HIT_WORDS[G.throwNo % HIT_WORDS.length], G.throwNo)); // a winning hit is announced by the win itself
     addPoints(first);
   } else {
     Sound.sfx('bounce'); if (!Sound.say('sfx-miss', 'miss')) Sound.sfx('miss');
     if (o.bad) G.spurl = { p: G.match.player, at: G.clock }; // a fuming scribble over the thrower's head
-    const words = o.chance ? 'SO CLOSE!' : o.kind === 'short' ? 'NOT ENOUGH!' : o.kind === 'long' ? 'TOO MUCH!' : o.side < 0 ? 'A BIT LEFT!' : 'A BIT RIGHT!';
-    showFloat(words, 'NO POINTS', true);
+    const category = o.chance ? 'near' : o.kind === 'short' ? 'short' : o.kind === 'long' ? 'long' : o.side < 0 ? 'left' : 'right';
+    const defaults = { near: 'SO CLOSE!', short: 'NOT ENOUGH!', long: 'TOO MUCH!', left: 'A BIT LEFT!', right: 'A BIT RIGHT!' };
+    const words = phrase(category, defaults[category], G.throwNo);
+    // Noodles bubble remains legible; retain the smaller NO POINTS line only.
+    const noodlesOnThisThrow = G.noodleCaller !== null && G.noodleCaller !== G.match.player && G.noodleAt >= s.start;
+    showFloat(noodlesOnThisThrow ? '' : words, 'NO POINTS', true);
   }
 }
 function onFlightEnd(s) {
@@ -898,7 +907,7 @@ function startPower() { Sound.unlock(); G.phase = 'power'; G.meterClock = 0; G.m
 function lockPower() { G.phase = 'aim'; G.meterClock = 0; G.meterStart = G.clock; Sound.sfx('lock', 1); hud(); }
 function launch() {
   const m = G.match, boosted = G.boost[m.player] && !m.halfway;
-  const outcome = Rules.judge(G.power, G.aim, m.halfway, boosted, Math.random(), m.fiveStreak);
+  const outcome = Rules.judge(G.power, G.aim, m.halfway, boosted, Math.random(), m.fiveStreak, isLeading());
   if (G.boost[m.player]) G.boost[m.player] = false; // one throw only
   G.shot = makeShot(outcome); G.rest = null; G.drag = null; G.phase = 'flight';
   Sound.sfx('throw', m.halfway); hud();
@@ -1238,7 +1247,7 @@ function updateCPU() {
     return;
   }
   const token = G.throwNo + ':' + G.phase;
-  if (token !== G.cpuToken) { G.cpuToken = token; G.cpuAt = G.clock + 850 + Math.random() * 450; if (G.phase === 'ready') { G.cpuPlan = Rules.cpuPlan(G.match.halfway, Math.random, G.match.fiveStreak); G.cpuBothered = false; } }
+  if (token !== G.cpuToken) { G.cpuToken = token; G.cpuAt = G.clock + 850 + Math.random() * 450; if (G.phase === 'ready') { G.cpuPlan = Rules.cpuPlan(G.match.halfway, Math.random, G.match.fiveStreak, isLeading()); G.cpuBothered = false; } }
   if (!G.cpuPlan) return;
   if (G.phase === 'ready' && G.clock >= G.cpuAt && !prepping()) act(1);
   else if (G.phase === 'power' && G.power >= G.cpuPlan.power) act(1);
@@ -1314,7 +1323,7 @@ function showBanner(title, sub, variant, ms) {
   clearTimeout(bannerTimer); bannerTimer = setTimeout(() => { b.hidden = true; }, ms);
 }
 function showFloat(text, sub, miss = false) {
-  const f = els.float; f.className = 'float' + (miss ? ' miss' : ''); f.innerHTML = text + (sub ? '<small>' + sub + '</small>' : ''); void f.offsetWidth; f.classList.add('show');
+  const f = els.float; f.className = 'float' + (miss ? ' miss' : '') + (!text ? ' small-only' : ''); f.innerHTML = text + (sub ? '<small>' + sub + '</small>' : ''); void f.offsetWidth; f.classList.add('show');
   clearTimeout(floatTimer); floatTimer = setTimeout(() => { f.className = 'float'; }, 1700);
 }
 function setZone(el, lo, hi) { el.style.left = (lo * 100) + '%'; el.style.width = ((hi - lo) * 100) + '%'; }
@@ -1322,7 +1331,7 @@ function hud() {
   const m = G.match, P = G.phase, p = m.player;
   els.game.dataset.phase = P; els.game.dataset.control = G.controlMode;
   const boosted = G.boost[p] && !m.halfway && P !== 'pinky';
-  const g = Rules.green(m.halfway, m.fiveStreak), fr = Rules.fringe(m.halfway, m.fiveStreak), d = Rules.gold(boosted);
+  const g = Rules.green(m.halfway, m.fiveStreak, isLeading()), fr = Rules.fringe(m.halfway, m.fiveStreak, isLeading()), d = Rules.gold(boosted);
   ['power', 'aim'].forEach((k, n) => { const e = els.meter[n]; setZone(e.fringe, g[k][0] - fr, g[k][1] + fr); setZone(e.green, g[k][0], g[k][1]); setZone(e.gold, d[k][0], d[k][1]); e.gold.hidden = m.halfway; });
   const showMeters = G.victor === null && ((G.controlMode === 'timing' || cpuTurn()) && ['ready', 'power', 'aim'].includes(P) || P === 'dragging');
   els.meters.hidden = !showMeters;
