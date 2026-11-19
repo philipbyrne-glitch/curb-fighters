@@ -435,7 +435,7 @@ function drawCharacter(c, x, y, i, o = {}) {
     if (o.bounce !== undefined) { c.fillStyle = '#17372d40'; c.beginPath(); c.ellipse(30 * f, 0, (3 + 4 * o.bounce) * f, (1.5 + 1.5 * o.bounce) * f, 0, 0, Math.PI * 2); c.fill(); }
     if (o.eating) drawCone(c, 30 * f, -88 * f, 49 * f, o.eaten || 0);
     else drawBall(c, 30 * f, (-54 + 42 * o.bounce) * f, 12 * f, o.spin || 0, o.squash || 0);
-    if (o.eating || o.bounce < .23) c.drawImage(Art.base[i][2], 87, 48, 23, 14, Math.round(23 * f), Math.round(-52 * f), Math.round(23 * f), Math.round(14 * f));
+    if (i !== 4 && (o.eating || o.bounce < .23)) c.drawImage(Art.base[i][2], 87, 48, 23, 14, Math.round(23 * f), Math.round(-52 * f), Math.round(23 * f), Math.round(14 * f));
   }
   c.restore();
 }
@@ -534,7 +534,7 @@ const G = {
   power: .01, aim: .01, meterClock: 0, drag: null,
   shot: null, ball: null, caught: false, rest: null,
   throwNo: 0, bombs: [2, 2], noodleUntil: 0, noodleCaller: null, noodleThrow: -1, noodleAt: -1e9,
-  nextDog: 0, dogStart: 0, dogUntil: 0, nextCar: 0, carStart: 0, carUntil: 0, carDir: 1, carColor: 0, carCount: 0, waitVariants: [0, 0, 0, 0],
+  nextDog: 0, dogStart: 0, dogUntil: 0, nextCar: 0, carStart: 0, carUntil: 0, carDir: 1, carColor: 0, carCount: 0, waitVariants: [0, 0, 0, 0, 0],
   nextCollector: 0, collectorStart: 0, collectorUntil: 0, collectorPair: false,
   prepStart: 0, prepBops: 0, resultAt: 0, resultHold: 0,
   boost: [false, false], pinkySeen: false, pinky: null,
@@ -1003,7 +1003,7 @@ function beginTraffic() {
   // Put absent family members' cars in the first two traffic events.
   G.carColor = G.carCount < familyCars.length ? familyCars[G.carCount] : [0, 1, ...familyCars][Math.floor(Math.random() * (2 + familyCars.length))];
   G.carCount++;
-  G.waitVariants = [Math.floor(Math.random() * 4), Math.floor(Math.random() * 2), Math.floor(Math.random() * 2), Math.floor(Math.random() * 2)];
+  G.waitVariants = [Math.floor(Math.random() * 4), Math.floor(Math.random() * 2), Math.floor(Math.random() * 2), Math.floor(Math.random() * 2), Math.floor(Math.random() * 2)];
   G.phase = 'traffic'; G.engineAt = 0; G.carBeeped = false;
   showBanner('CAR!', 'EVERYONE ON THE PAVEMENT', '', 1900);
   Sound.sfx('horn'); hud();
