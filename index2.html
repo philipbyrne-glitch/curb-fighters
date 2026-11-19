@@ -14,7 +14,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="assets/built/favicon.png">
 <link rel="apple-touch-icon" href="assets/built/apple-touch-icon.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap">
-<link rel="stylesheet" href="source/style.css?v=20261119-boot-buttons-delay-v1">
+<link rel="stylesheet" href="source/style.css?v=20261119-intro-audio-row">
 </head>
 <body>
 <div class="rotate" role="status"><div class="spin" aria-hidden="true"><canvas id="rotate-arrows" width="48" height="48"></canvas><canvas id="rotate-ball" width="48" height="48"></canvas></div><strong>TURN TO PLAY</strong><p>Curb Fighters plays sideways.<br>Rotate your phone to landscape.</p></div>
@@ -28,10 +28,14 @@
   </div>
   <div id="audio-panel" class="audio-panel panel">
     <button id="enable-audio" class="enable" type="button" hidden>ENABLE AUDIO</button>
-    <label for="music-level"><span>MUSIC</span><output id="music-out" for="music-level">70%</output></label>
-    <label for="sfx-level"><span>SFX</span><output id="sfx-out" for="sfx-level">70%</output></label>
-    <input id="music-level" type="range" min="0" max="100" value="70" aria-label="Music volume" style="grid-column:1">
-    <input id="sfx-level" type="range" min="0" max="100" value="70" aria-label="Sound effects volume" style="grid-column:2">
+    <div class="volume">
+      <label for="music-level"><span>MUSIC</span><output id="music-out" for="music-level">70%</output></label>
+      <input id="music-level" type="range" min="0" max="100" value="70" aria-label="Music volume">
+    </div>
+    <div class="volume">
+      <label for="sfx-level"><span>SFX</span><output id="sfx-out" for="sfx-level">70%</output></label>
+      <input id="sfx-level" type="range" min="0" max="100" value="70" aria-label="Sound effects volume">
+    </div>
   </div>
 </section>
 
