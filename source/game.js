@@ -359,13 +359,17 @@ await pinkyPoseStrip.decode();
 const pinkyFrame = (n) => {
   const frame = makeCanvas(128, 112), c = frame.getContext('2d');
   c.imageSmoothingEnabled = false;
-  // 56x80 fully transparent frames. Keep feet at y=100, matching the other actors.
-  c.drawImage(pinkyPoseStrip, n * 56, 0, 56, 80, 24, 4, 80, 96);
+  // Crop to each complete silhouette (not the original sheet's empty margins).
+  // Includes the opaque black trousers, patent shoes and dark outlines.
+  const bounds = [[13,16,30,52], [13,17,27,50], [8,18,36,50],
+                  [11,16,34,51], [16,22,28,46]][n];
+  c.drawImage(pinkyPoseStrip, n * 56 + bounds[0], bounds[1],
+    bounds[2], bounds[3], 24, 4, 80, 96);
   frame.cell = 'pinky';
   return frame;
 };
 const pinkyHead = makeCanvas(52, 46);
-pinkyHead.getContext('2d').drawImage(pinkyPoseStrip, 11, 16, 34, 28, 0, 0, 52, 46);
+pinkyHead.getContext('2d').drawImage(pinkyPoseStrip, 13, 16, 30, 29, 0, 0, 52, 46);
 const cellOf = (n) => { const c = makeCanvas(128, 112), cols = META.actors.cols; c.getContext('2d').drawImage(IMG.actors, (n % cols) * 128, Math.floor(n / cols) * 112, 128, 112, 0, 0, 128, 112); c.cell = n; return c; };
 const pickCells = (k) => META.actors.index[k].map(cellOf);
 const copyOf = (src) => { const c = makeCanvas(src.width, src.height); c.getContext('2d').drawImage(src, 0, 0); c.cell = src.cell; return c; };
