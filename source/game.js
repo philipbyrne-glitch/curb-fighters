@@ -30,7 +30,13 @@ const COARSE = matchMedia('(pointer: coarse)').matches;
 const PORTRAIT = matchMedia('(max-width: 700px) and (orientation: portrait)');
 const anyDialog = () => !!document.querySelector('dialog[open]');
 const THREE_CHARACTER_VERSION = window.CF_THREE_CHARACTER_VERSION === true;
-const SELECTABLE_AVATARS = THREE_CHARACTER_VERSION ? [0, 1, 2, 4] : [0, 1, 2, 3, 4];
+// Pinky (avatar 4) is implemented but SECRET. Do not include him in the
+// selection carousel, CPU pool, or victory crowd until a genuine unlock
+// mechanism is designed. Keeping all gameplay assets/code ready for later.
+const PINKY_UNLOCKED = false;
+const SELECTABLE_AVATARS = THREE_CHARACTER_VERSION
+  ? [0, 1, 2, ...(PINKY_UNLOCKED ? [4] : [])]
+  : [0, 1, 2, 3, ...(PINKY_UNLOCKED ? [4] : [])];
 const SELECT_STEP = Math.PI * 2 / SELECTABLE_AVATARS.length;
 const CHARACTERS = [
   { name: 'PHIL', desc: 'Bald, black glasses, white T-shirt and blue trousers' },
