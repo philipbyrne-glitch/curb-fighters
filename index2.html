@@ -14,7 +14,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="assets/built/favicon.png">
 <link rel="apple-touch-icon" href="assets/built/apple-touch-icon.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap">
-<link rel="stylesheet" href="source/style.css?v=20261119-learn-curbs">
+<link rel="stylesheet" href="source/style.css?v=20261119-boot-play-v1">
 </head>
 <body>
 <div class="rotate" role="status"><div class="spin" aria-hidden="true"><canvas id="rotate-arrows" width="48" height="48"></canvas><canvas id="rotate-ball" width="48" height="48"></canvas></div><strong>TURN TO PLAY</strong><p>Curb Fighters plays sideways.<br>Rotate your phone to landscape.</p></div>
@@ -22,8 +22,8 @@
 <section id="boot" class="screen boot" tabindex="0" aria-label="Curb Fighters. Press any key or tap to start.">
   <canvas id="boot-ball" class="boot-ball" width="96" height="96" aria-hidden="true"></canvas>
   <h1 class="logo"><span>CURB</span><span>FIGHTERS</span></h1>
-  <p id="boot-prompt" class="prompt">LOADING THE STREET…</p>
-  <button id="learn-open" class="btn ghost" type="button" aria-haspopup="dialog">Learn how to play</button>
+  <button id="boot-prompt" class="boot-play btn" type="button" disabled>LOADING THE STREET…</button>
+  <button id="learn-open" type="button" aria-haspopup="dialog">LEARN HOW TO PLAY</button>
   <div id="audio-panel" class="audio-panel panel">
     <button id="enable-audio" class="enable" type="button" hidden>ENABLE AUDIO</button>
     <label for="music-level"><span>MUSIC</span><output id="music-out" for="music-level">70%</output></label>
@@ -149,6 +149,6 @@
 <script>window.CF_THREE_CHARACTER_VERSION = true;</script>
 <script src="source/exclamations.js?v=20261119-syntax-fixed"></script>
 <script src="source/pinky-sprites.js?v=20261119-pinky-v1"></script>
-<script src="source/game.js?v=20261119-pinky-unlock-v2"></script>
+<script src="source/game.js?v=20261119-boot-play-v1"></script>
 </body>
 </html>
