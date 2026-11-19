@@ -1703,9 +1703,25 @@ function desiredMusic() {
   return null;
 }
 let introTitleAnnounced = false;
+let introTitleRetry = null;
 function announceIntroTitle() {
-  if (introTitleAnnounced || G.screen !== 'boot' || Sound.locked || !Sound.prefs.on) return;
+  if (introTitleAnnounced || G.screen !== 'boot' || !Sound.prefs.on) return;
+  // AudioContext.resume() is asynchronous on Safari/iOS. Wait until it is
+  // actually running before asking Sound.say() to decode and play the clip.
+  if (Sound.locked) return;
   introTitleAnnounced = Sound.say('voice-curbfighters', 'title');
+}
+function playIntroAfterUnlock() {
+  Sound.unlock();
+  clearInterval(introTitleRetry);
+  let attempts = 0;
+  introTitleRetry = setInterval(() => {
+    if (G.screen !== 'boot' || introTitleAnnounced || ++attempts > 40) {
+      clearInterval(introTitleRetry); return;
+    }
+    announceIntroTitle();
+    if (introTitleAnnounced) clearInterval(introTitleRetry);
+  }, 75);
 }
 function bootStart() { if (G.screen !== 'boot' || !booted) return; Sound.unlock(); Sound.sfx('go'); setScreen('select'); }
 let booted = false;
@@ -1717,7 +1733,7 @@ for (const kind of ['music', 'sfx']) for (const id of [kind + '-level', 'g-' + k
   $('#' + id).addEventListener('input', (e) => { Sound.set(kind, Number(e.target.value) / 100); Sound.unlock(); syncAudioControls(); if (kind === 'sfx') Sound.sfx('bop'); });
 }
 syncAudioControls();
-$('#enable-audio').addEventListener('click', () => { Sound.unlock(); announceIntroTitle(); });
+$('#enable-audio').addEventListener('click', playIntroAfterUnlock);
 const enableBtn = $('#enable-audio');
 function syncEnable() { enableBtn.hidden = !Sound.locked || !Sound.prefs.on; }
 Sound.onChange(syncEnable);
