@@ -5,7 +5,22 @@
    ===================================================================== */
 const CF = window.CF_DATA;
 const EXCLAMATIONS = window.CF_EXCLAMATIONS || {};
-const phrase = (category, fallback) => { const choices = EXCLAMATIONS[category]; return Array.isArray(choices) && choices.length ? choices[Math.floor(Math.random() * choices.length)] : fallback; };
+// Each category has its own shuffled bag: every phrase appears once per cycle.
+const phraseBags = new Map();
+const phrase = (category, fallback) => {
+  const choices = EXCLAMATIONS[category];
+  if (!Array.isArray(choices) || !choices.length) return fallback;
+  let bag = phraseBags.get(category);
+  if (!bag || bag.length === 0) {
+    bag = choices.map((_, i) => i);
+    for (let i = bag.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [bag[i], bag[j]] = [bag[j], bag[i]];
+    }
+    phraseBags.set(category, bag);
+  }
+  return choices[bag.pop()];
+};
 const $ = (s) => document.querySelector(s);
 const clamp = (v, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, v));
 const lerp = (a, b, t) => a + (b - a) * t;
