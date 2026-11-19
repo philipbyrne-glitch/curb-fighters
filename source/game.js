@@ -1961,7 +1961,7 @@ booted = true;
 // Title animation begins 550ms after the boot screen appears. Browsers that
 // allow audio play the voice there; otherwise ENABLE AUDIO plays it on tap.
 setTimeout(announceIntroTitle, 550);
-const prompt = $('#boot-prompt'); prompt.textContent = COARSE ? 'TAP TO START' : 'HIT ANY KEY TO START'; prompt.classList.add('ready');
+const prompt = $('#boot-prompt'); prompt.textContent = 'TAP TO PLAY'; prompt.disabled = false; prompt.classList.add('ready');
 if (!learn.open) $('#boot').focus({ preventScroll: true });
 requestAnimationFrame(frame);
 window.CurbFighters = { G, Rules, view, Select, Sound, startMatch, ready, beginPinky, launch, endTurn };
