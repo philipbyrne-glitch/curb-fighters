@@ -26,6 +26,7 @@ window.CF_DATA = {
     "game": "assets/built/game.mp3",
     "pinky": "assets/built/pinky.mp3",
     "win": "assets/built/win.mp3",
+    "voice-curbfighters": "assets/built/voice-curbfighters.mp3",
     "voice-phil": "assets/built/voice-phil.mp3",
     "voice-kim": "assets/built/voice-kim.mp3",
     "voice-rose": "assets/built/voice-rose.mp3",
