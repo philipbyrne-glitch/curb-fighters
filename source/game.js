@@ -1136,8 +1136,9 @@ function beginPinky(post) {
 function trackPinkyUnlock(e, player, at) {
   if (PINKY_UNLOCKED || G.cpu || !e.sync) return;
   const sync = e.sync;
-  // A waiting partner's tap expires; starting a fresh pair is still allowed.
-  if (sync.pending[1 - player] !== null && at - sync.pending[1 - player] > 350) {
+  // Any orphaned tap expires, even when the same player taps again.
+  // This prevents missing a beat and then resuming the old streak.
+  if (sync.pending.some((time) => time !== null && at - time > 350)) {
     sync.pending = [null, null];
     sync.pairs = 0;
     sync.lastPair = null;
