@@ -5,7 +5,7 @@
    ===================================================================== */
 const CF = window.CF_DATA;
 const EXCLAMATIONS = window.CF_EXCLAMATIONS || {};
-const phrase = (category, fallback, index = 0) => { const choices = EXCLAMATIONS[category]; return Array.isArray(choices) && choices.length ? choices[index % choices.length] : fallback; };
+const phrase = (category, fallback) => { const choices = EXCLAMATIONS[category]; return Array.isArray(choices) && choices.length ? choices[Math.floor(Math.random() * choices.length)] : fallback; };
 const $ = (s) => document.querySelector(s);
 const clamp = (v, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, v));
 const lerp = (a, b, t) => a + (b - a) * t;
