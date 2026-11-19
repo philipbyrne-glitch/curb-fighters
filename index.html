@@ -20,7 +20,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="assets/built/favicon.png">
 <link rel="apple-touch-icon" href="assets/built/apple-touch-icon.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap">
-<link rel="stylesheet" href="source/style.css?v=20261119-phone-hint">
+<link rel="stylesheet" href="source/style.css?v=20261119-learn-curbs">
 </head>
 <body>
 <div class="rotate" role="status"><div class="spin" aria-hidden="true"><canvas id="rotate-arrows" width="48" height="48"></canvas><canvas id="rotate-ball" width="48" height="48"></canvas></div><strong>TURN TO PLAY</strong><p>Curb Fighters plays sideways.<br>Rotate your phone to landscape.</p></div>
@@ -29,6 +29,7 @@
   <canvas id="boot-ball" class="boot-ball" width="96" height="96" aria-hidden="true"></canvas>
   <h1 class="logo"><span>CURB</span><span>FIGHTERS</span></h1>
   <p id="boot-prompt" class="prompt">LOADING THE STREET…</p>
+  <button id="learn-open" class="btn ghost" type="button" aria-haspopup="dialog">Learn how to play</button>
   <div id="audio-panel" class="audio-panel panel">
     <button id="enable-audio" class="enable" type="button" hidden>ENABLE AUDIO</button>
     <label for="music-level"><span>MUSIC</span><output id="music-out" for="music-level">70%</output></label>
@@ -103,6 +104,32 @@
   <div class="cele-head"><small>STREET CHAMPION</small><strong id="cele-name">PHIL WINS!</strong><span id="cele-score">100 – 0</span><p class="cele-prompt" id="cele-prompt" hidden>TAP TO PLAY AGAIN</p></div>
 </section>
 
+<dialog id="learn" aria-label="Learn how to play">
+  <div class="learn-pages">
+    <section id="learn-intro">
+      <h2 tabindex="-1" autofocus>WHAT IS CURBS?</h2>
+      <p>Curbs is a street game for two players. Stand on opposite sides of the road and take turns throwing a ball at the curb across from you. Hit the edge and bounce it back to score.</p>
+      <p>A hit from your curb scores <b>10 points</b> and moves you halfway across. From there, each hit is worth <b>5 points</b>. Keep throwing until you miss, then it’s your rival’s turn. <b>First to 100 wins!</b></p>
+      <p>Share a screen with a friend or take on the CPU.</p>
+    </section>
+    <section id="learn-controls" hidden>
+      <h2 tabindex="-1">HOW TO PLAY</h2>
+      <ol>
+        <li><b>Start, power, aim.</b> Tap your side (Player 1 left, Player 2 right) or press <span class="keys">Q</span> for Player 1 and <span class="keys">P</span> for Player 2. Once to start the power meter, again to lock power, and once more to lock aim and throw. Space also works on your turn. Against the CPU, tap anywhere.</li>
+        <li><b>Watch the needles.</b> Green on both meters gets you a hit. Yellow edges give you a 50/50 chance. From the curb, hit gold on both for <b>Double Trouble</b>, a bounce off both curbs worth <b>30 points</b>.</li>
+        <li><b>Street distractions.</b> Cars pause play and the dog makes your aim wobble. You also get two <b>NOODLES!</b> per match. Hit your button (or <span class="keys">X</span> for Player 1, <span class="keys">N</span> for Player 2) while your rival sets up a throw to shake their aim.</li>
+        <li><b>Pinky’s 99 race.</b> Wait for <b>NOM!</b>, then tap your side or mash <span class="keys">Q / P</span> to eat. First to finish wins. During a match, the winner earns a <b>99 BOOST</b> with bigger gold zones on their next throw from the curb.</li>
+      </ol>
+    </section>
+  </div>
+  <div class="dialog-actions">
+    <button class="btn ghost" id="learn-close" type="button">Close</button>
+    <button class="btn ghost" id="learn-back" type="button" hidden>Back</button>
+    <button class="btn" id="learn-next" type="button">Next</button>
+    <button class="btn" id="learn-done" type="button" hidden>Done</button>
+  </div>
+</dialog>
+
 <dialog id="help" aria-labelledby="help-title">
   <h2 id="help-title">THE STREET RULES</h2>
   <ol>
@@ -126,6 +153,6 @@
 <div class="fade" id="fade" aria-hidden="true"></div>
 <script src="source/assets.js"></script>
 <script src="source/exclamations.js?v=20261119-syntax-fixed"></script>
-<script src="source/game.js?v=20261119-phone-framing-v2"></script>
+<script src="source/game.js?v=20261119-learn-curbs"></script>
 </body>
 </html>

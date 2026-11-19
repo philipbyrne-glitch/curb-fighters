@@ -334,6 +334,17 @@ dialog .keys { color: var(--blush); }
 .btn { min-height: 46px; padding: 10px 16px; border: 2px solid var(--gold); background: var(--gold); color: var(--panel-solid); font: 10px/1.4 var(--arcade); box-shadow: 3px 3px 0 var(--shadow); }
 .btn.ghost { background: none; color: var(--gold); }
 .btn:active { translate: 0 2px; box-shadow: 1px 1px 0 var(--shadow); }
+#learn-open, #learn .btn { text-transform: uppercase; }
+#learn-open { flex: none; }
+#learn[open] {
+  display: flex; flex-direction: column; width: min(640px, calc(100% - var(--sl) - var(--sr) - 28px));
+  max-height: calc(100dvh - var(--st) - var(--sb) - 28px); padding: 0;
+  overflow: hidden;
+}
+.learn-pages { overflow: auto; padding: 20px 22px 0; }
+.learn-pages h2:focus { outline: none; }
+.learn-pages p { margin: 0 0 12px; }
+#learn .dialog-actions { flex: none; margin: 0; padding: 10px 22px 14px; }
 
 /* ---------- Rotate prompt ---------- */
 .rotate { display: none; }
@@ -349,6 +360,10 @@ dialog .keys { color: var(--blush); }
 }
 
 /* ---------- Compact landscape phones ---------- */
+@media (max-height: 360px) {
+  .boot { gap: 6px; }
+  .boot-ball { width: 44px; height: 44px; }
+}
 @media (max-height: 520px) {
   .modes button { min-height: 38px; padding: 5px 8px; font-size: 8px; }
   .tool { width: 40px; height: 38px; }

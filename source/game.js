@@ -1475,12 +1475,14 @@ function detectPinkySecret(e) {
 }
 document.addEventListener('keydown', (e) => {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (anyDialog()) return;
   if (detectPinkySecret(e)) return;
   if (G.screen === 'boot') {
-    if (e.target.closest?.('#audio-panel') || ['Tab', 'Shift', 'Escape'].includes(e.key)) return;
+    if (['Tab', 'Shift', 'Escape'].includes(e.key) ||
+        (e.target === learnOpen && ['Enter', ' '].includes(e.key))) return;
     e.preventDefault(); bootStart(); return;
   }
-  if (anyDialog() || PORTRAIT.matches) return;
+  if (PORTRAIT.matches) return;
   if (G.soundOpen) { if (e.key === 'Escape') openSound(false); return; }
   if (G.screen === 'select') { selectKey(e); return; }
   if (G.screen === 'celebrate') { if (!['Tab', 'Shift'].includes(e.key)) { e.preventDefault(); leaveCelebration(); } return; }
@@ -1747,18 +1749,43 @@ function playIntroAfterUnlock() {
   Sound.unlock();
   announceIntroTitle(); // play() happens directly inside the click gesture.
 }
+let bootTimer = null;
 function bootStart() {
-  if (G.screen !== 'boot' || !booted) return;
+  if (G.screen !== 'boot' || !booted || bootTimer !== null || anyDialog()) return;
   playIntroAfterUnlock();
   // Give the title chant time to be heard before leaving the intro.
-  setTimeout(() => {
+  bootTimer = setTimeout(() => {
+    bootTimer = null;
     if (G.screen !== 'boot') return;
     Sound.sfx('go');
     setScreen('select');
   }, introTitleAnnounced ? 1200 : 1500);
 }
 let booted = false;
-$('#boot').addEventListener('click', (e) => { if (e.target.closest('#audio-panel')) return; bootStart(); });
+const bootControls = '#audio-panel, #learn-open';
+$('#boot').addEventListener('click', (e) => { if (e.target.closest(bootControls)) return; bootStart(); });
+const learn = $('#learn');
+const learnOpen = $('#learn-open');
+function showLearnPage(controls) {
+  $('#learn-intro').hidden = controls;
+  $('#learn-controls').hidden = !controls;
+  $('#learn-close').hidden = controls;
+  $('#learn-back').hidden = !controls;
+  $('#learn-next').hidden = controls;
+  $('#learn-done').hidden = !controls;
+  if (!learn.open) learn.showModal();
+  learn.querySelector('.learn-pages').scrollTop = 0;
+  learn.querySelector('section:not([hidden]) h2').focus({ preventScroll: true });
+}
+learnOpen.addEventListener('click', () => {
+  clearTimeout(bootTimer);
+  bootTimer = null;
+  showLearnPage(false);
+});
+$('#learn-next').addEventListener('click', () => showLearnPage(true));
+$('#learn-back').addEventListener('click', () => showLearnPage(false));
+$('#learn-close').addEventListener('click', () => learn.close());
+$('#learn-done').addEventListener('click', () => learn.close());
 $('#celebrate').addEventListener('pointerdown', (e) => { G.lastInput = e.pointerType === 'mouse' ? 'mouse' : 'touch'; $('#cele-prompt').textContent = G.lastInput === 'touch' ? 'TAP TO PLAY AGAIN' : 'CLICK OR PRESS ANY KEY'; leaveCelebration(); });
 const panel = $('#audio-panel');
 ['pointerdown', 'click', 'keydown'].forEach((t) => panel.addEventListener(t, (e) => e.stopPropagation()));
@@ -1828,7 +1855,7 @@ booted = true;
 // allow audio play the voice there; otherwise ENABLE AUDIO plays it on tap.
 setTimeout(announceIntroTitle, 550);
 const prompt = $('#boot-prompt'); prompt.textContent = COARSE ? 'TAP TO START' : 'HIT ANY KEY TO START'; prompt.classList.add('ready');
-$('#boot').focus({ preventScroll: true });
+if (!learn.open) $('#boot').focus({ preventScroll: true });
 requestAnimationFrame(frame);
 window.CurbFighters = { G, Rules, view, Select, Sound, startMatch, ready, beginPinky, launch, endTurn };
 })().catch((err) => {
