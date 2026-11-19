@@ -5,7 +5,22 @@
    ===================================================================== */
 const CF = window.CF_DATA;
 const EXCLAMATIONS = window.CF_EXCLAMATIONS || {};
-const phrase = (category, fallback, index = 0) => { const choices = EXCLAMATIONS[category]; return Array.isArray(choices) && choices.length ? choices[index % choices.length] : fallback; };
+// Each category has its own shuffled bag: every phrase appears once per cycle.
+const phraseBags = new Map();
+const phrase = (category, fallback) => {
+  const choices = EXCLAMATIONS[category];
+  if (!Array.isArray(choices) || !choices.length) return fallback;
+  let bag = phraseBags.get(category);
+  if (!bag || bag.length === 0) {
+    bag = choices.map((_, i) => i);
+    for (let i = bag.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [bag[i], bag[j]] = [bag[j], bag[i]];
+    }
+    phraseBags.set(category, bag);
+  }
+  return choices[bag.pop()];
+};
 const $ = (s) => document.querySelector(s);
 const clamp = (v, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, v));
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -1702,28 +1717,34 @@ function desiredMusic() {
   }
   return null;
 }
+// Intro title uses a native media element so the first user gesture can
+// start playback immediately, without waiting for Web Audio decoding/resume.
+const introVoice = new Audio(CF.audio['voice-curbfighters']);
+introVoice.preload = 'auto';
+introVoice.volume = 0.28; // Same effective dialogue mix: 0.4 voice * 0.7 SFX.
 let introTitleAnnounced = false;
-let introTitleRetry = null;
 function announceIntroTitle() {
-  if (introTitleAnnounced || G.screen !== 'boot' || !Sound.prefs.on) return;
-  // AudioContext.resume() is asynchronous on Safari/iOS. Wait until it is
-  // actually running before asking Sound.say() to decode and play the clip.
-  if (Sound.locked) return;
-  introTitleAnnounced = Sound.say('voice-curbfighters', 'title');
+  if (introTitleAnnounced || G.screen !== 'boot' || !Sound.prefs.on || Sound.prefs.sfx <= 0) return;
+  introVoice.volume = Math.min(1, 0.4 * Sound.prefs.sfx);
+  const attempt = introVoice.play();
+  if (attempt && typeof attempt.then === 'function') {
+    attempt.then(() => { introTitleAnnounced = true; }).catch(() => {});
+  } else introTitleAnnounced = true;
 }
 function playIntroAfterUnlock() {
   Sound.unlock();
-  clearInterval(introTitleRetry);
-  let attempts = 0;
-  introTitleRetry = setInterval(() => {
-    if (G.screen !== 'boot' || introTitleAnnounced || ++attempts > 40) {
-      clearInterval(introTitleRetry); return;
-    }
-    announceIntroTitle();
-    if (introTitleAnnounced) clearInterval(introTitleRetry);
-  }, 75);
+  announceIntroTitle(); // play() happens directly inside the click gesture.
 }
-function bootStart() { if (G.screen !== 'boot' || !booted) return; Sound.unlock(); Sound.sfx('go'); setScreen('select'); }
+function bootStart() {
+  if (G.screen !== 'boot' || !booted) return;
+  playIntroAfterUnlock();
+  // Give the title chant time to be heard before leaving the intro.
+  setTimeout(() => {
+    if (G.screen !== 'boot') return;
+    Sound.sfx('go');
+    setScreen('select');
+  }, introTitleAnnounced ? 1200 : 1500);
+}
 let booted = false;
 $('#boot').addEventListener('click', (e) => { if (e.target.closest('#audio-panel')) return; bootStart(); });
 $('#celebrate').addEventListener('pointerdown', (e) => { G.lastInput = e.pointerType === 'mouse' ? 'mouse' : 'touch'; $('#cele-prompt').textContent = G.lastInput === 'touch' ? 'TAP TO PLAY AGAIN' : 'CLICK OR PRESS ANY KEY'; leaveCelebration(); });
