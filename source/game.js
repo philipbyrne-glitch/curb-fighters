@@ -533,11 +533,11 @@ const court = $('#court'), ctx = court.getContext('2d');
 ctx.imageSmoothingEnabled = false;
 const groundLayer = makeCanvas(W, H), gctx = groundLayer.getContext('2d');
 let groundKey = '';
-const view = { camera: 0, target: 0, zoom: 1, focus: 0 };
+const view = { camera: 0, target: 0, zoom: 1, focus: 0, verticalPan: 0 };
 function project(x, y, z = 0) {
   y -= view.focus;
   const c = Math.cos(view.camera), s = Math.sin(view.camera), a = x * c - y * s, b = x * s + y * c, zm = view.zoom;
-  return { x: 480 + (a - b) * 29 * zm, y: 244 + 32 * (zm - 1) + (a + b) * 15 * zm - z * 33 * zm, depth: a + b };
+  return { x: 480 + (a - b) * 29 * zm, y: 244 + view.verticalPan + 32 * (zm - 1) + (a + b) * 15 * zm - z * 33 * zm, depth: a + b };
 }
 function poly(c, pts, fill) { c.beginPath(); pts.forEach((p, i) => c[i ? 'lineTo' : 'moveTo'](Math.round(p.x), Math.round(p.y))); c.closePath(); c.fillStyle = fill; c.fill(); }
 function flat(c, x, y, w, h, fill, z = 0) { poly(c, [project(x, y, z), project(x + w, y, z), project(x + w, y + h, z), project(x, y + h, z)], fill); }
@@ -555,7 +555,7 @@ function drawCurb(c, y0, y1, roadSide) {
   for (let x = -18; x < 18; x++) { const a = project(x, y0, .145), b = project(x, y1, .145); c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.stroke(); }
 }
 function renderGround() {
-  const key = view.camera.toFixed(4) + '|' + view.zoom.toFixed(4) + '|' + view.focus.toFixed(4);
+  const key = view.camera.toFixed(4) + '|' + view.zoom.toFixed(4) + '|' + view.focus.toFixed(4) + '|' + view.verticalPan.toFixed(3);
   if (key === groundKey) return;
   groundKey = key;
   const g = gctx;
@@ -893,7 +893,7 @@ function startMatch() {
     nextCar: 5 + Math.floor(Math.random() * 3), carUntil: 0, carCount: 0, nextDog: 2 + Math.floor(Math.random() * 3), dogUntil: 0,
     nextCollector: 3 + Math.floor(Math.random() * 3), collectorUntil: 0, cpuToken: '', cpuNoodleThrow: -1, cpuNoodleAt: 0,
   });
-  view.camera = view.target = 0; view.zoom = 1; view.focus = 0; groundKey = '';
+  view.camera = view.target = 0; view.zoom = 1; view.focus = 0; view.verticalPan = 0; groundKey = '';
   $('#winner').hidden = true; $('#banner').hidden = true; $('#race').hidden = true;
   Sound.forget('game');
   setScreen('game');
@@ -1296,12 +1296,15 @@ function update(dt) {
   const close = m.halfway && !['traffic', 'pinky'].includes(P) && G.victor === null;
   // Physical screen dimensions distinguish phones from iPads, even in landscape.
   const phoneScreen = Math.min(window.screen.width, window.screen.height) <= 600;
-  const phoneZoom = phoneScreen ? 1.25 : 1;
-  const zt = (close ? 1.5 : 1) * phoneZoom, ft = close ? (m.player === 0 ? -1 : 1) : 0;
+  const zt = phoneScreen ? (close ? 2.0 : 1.30) : (close ? 1.5 : 1);
+  const panTarget = phoneScreen ? -14 : 0;
+  view.verticalPan += (panTarget - view.verticalPan) * Math.min(1, dt * .004);
+  if (Math.abs(panTarget - view.verticalPan) < .0005) view.verticalPan = panTarget;
+  const ft = close ? (m.player === 0 ? -1 : 1) : 0;
   view.zoom += (zt - view.zoom) * Math.min(1, dt * .004); view.focus += (ft - view.focus) * Math.min(1, dt * .004);
   if (Math.abs(zt - view.zoom) < .0005) view.zoom = zt;
   if (Math.abs(ft - view.focus) < .0005) view.focus = ft;
-  if (REDUCED) { view.zoom = zt; view.focus = ft; }
+  if (REDUCED) { view.zoom = zt; view.focus = ft; view.verticalPan = panTarget; }
   const noodled = G.clock < G.noodleUntil, dog = G.clock < G.dogUntil;
   if (P === 'power' || P === 'aim') {
     const speed = P === 'aim' ? (noodled ? 1.7 : dog ? 1.35 : 1) : 1;
