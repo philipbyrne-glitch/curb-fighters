@@ -30,13 +30,14 @@ const COARSE = matchMedia('(pointer: coarse)').matches;
 const PORTRAIT = matchMedia('(max-width: 700px) and (orientation: portrait)');
 const anyDialog = () => !!document.querySelector('dialog[open]');
 const THREE_CHARACTER_VERSION = window.CF_THREE_CHARACTER_VERSION === true;
-const SELECTABLE_AVATARS = THREE_CHARACTER_VERSION ? [0, 1, 2] : [0, 1, 2, 3];
+const SELECTABLE_AVATARS = THREE_CHARACTER_VERSION ? [0, 1, 2, 4] : [0, 1, 2, 3, 4];
 const SELECT_STEP = Math.PI * 2 / SELECTABLE_AVATARS.length;
 const CHARACTERS = [
   { name: 'PHIL', desc: 'Bald, black glasses, white T-shirt and blue trousers' },
   { name: 'SHAY', desc: 'Blond hair, yellow-and-white striped T-shirt, teal shorts and red trainers' },
   { name: 'ROSE', desc: 'Blond hair, sunglasses on her head, purple sporty top' },
   { name: 'KIM', desc: 'Dark brown hair, coral top and gold earrings' },
+  { name: 'PINKY', desc: 'Silver hair, white dress shirt, black suit trousers and polished black shoes' },
 ];
 function makeCanvas(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; c.getContext('2d').imageSmoothingEnabled = false; return c; }
 
@@ -345,12 +346,29 @@ const [META] = await Promise.all([
   }))),
 ]);
 const PR = META.props;
+const pinkyPoseStrip = new Image();
+pinkyPoseStrip.src = window.CF_PINKY_POSES;
+await pinkyPoseStrip.decode();
+const pinkyFrame = (n) => {
+  const frame = makeCanvas(128, 112), c = frame.getContext('2d');
+  c.imageSmoothingEnabled = false;
+  c.drawImage(pinkyPoseStrip, n * 40, 0, 40, 48, 24, 4, 80, 96);
+  frame.cell = 'pinky';
+  return frame;
+};
+const pinkyHead = makeCanvas(52, 46);
+pinkyHead.getContext('2d').drawImage(pinkyPoseStrip, 1, 0, 35, 29, 0, 0, 52, 46);
 const cellOf = (n) => { const c = makeCanvas(128, 112), cols = META.actors.cols; c.getContext('2d').drawImage(IMG.actors, (n % cols) * 128, Math.floor(n / cols) * 112, 128, 112, 0, 0, 128, 112); c.cell = n; return c; };
 const pickCells = (k) => META.actors.index[k].map(cellOf);
 const copyOf = (src) => { const c = makeCanvas(src.width, src.height); c.getContext('2d').drawImage(src, 0, 0); c.cell = src.cell; return c; };
 const Art = { base: [], wait: [], alt: [], emote: [], catch: [], react: [], walker: pickCells('walker'), trophy: [] };
-const HOLD = [[52, 32], [52, 32], [54, 33], [67, 33]];
+const HOLD = [[52, 32], [52, 32], [54, 33], [67, 33], [85, 52]];
 for (let i = 0; i < 4; i++) { Art.base[i] = pickCells('base' + i); Art.wait[i] = pickCells('wait' + i); Art.alt[i] = pickCells('alt' + i); Art.emote[i] = pickCells('emote' + i); }
+const pinkyFrames = [0, 1, 2, 3, 4].map(pinkyFrame);
+Art.base[4] = [pinkyFrames[0], pinkyFrames[2], pinkyFrames[1], pinkyFrames[3]];
+Art.wait[4] = [pinkyFrames[0], pinkyFrames[1], pinkyFrames[0], pinkyFrames[1], pinkyFrames[0], pinkyFrames[1]];
+Art.alt[4] = [pinkyFrames[1], pinkyFrames[0], pinkyFrames[1], pinkyFrames[0]];
+Art.emote[4] = [pinkyFrames[4], pinkyFrames[3], pinkyFrames[3], pinkyFrames[4]];
 
 function drawBall(c, x, y, radius = 12, spin = 0, squash = 0) {
   const img = radius > 18 ? IMG.ball48 : IMG.ball24, size = Math.max(2, Math.round(radius * 2));
@@ -362,7 +380,7 @@ function drawBall(c, x, y, radius = 12, spin = 0, squash = 0) {
   c.rotate(Math.round(spin / (Math.PI / 2)) * (Math.PI / 2)); // quarter turns keep every pixel square
   c.drawImage(img, -Math.round(size / 2), -Math.round(size / 2), size, size); c.restore();
 }
-for (let i = 0; i < 4; i++) {
+for (let i = 0; i < 5; i++) {
   drawBall(Art.base[i][1].getContext('2d'), HOLD[i][0], HOLD[i][1], 12, 0); // our football replaces the atlas ball
   const k = copyOf(Art.base[i][2]), kc = k.getContext('2d');
   drawBall(kc, 94, 46, 12, 0);
@@ -371,6 +389,8 @@ for (let i = 0; i < 4; i++) {
   Art.react[i] = Art.base[i].map((pose) => { const r = copyOf(pose); r.getContext('2d').drawImage(Art.emote[i][0], 48, 42, 34, 20, 48, 42, 34, 20); return r; });
 }
 for (let i = 0; i < 4; i++) { const c = makeCanvas(128, 112); c.getContext('2d').drawImage(IMG.trophy, i * 128, 0, 128, 112, 0, 0, 128, 112); Art.trophy[i] = c; }
+Art.trophy[4] = copyOf(Art.base[4][3]);
+drawBall(Art.trophy[4].getContext('2d'), HOLD[4][0], HOLD[4][1] - 10, 17, 0);
 const tileCanvases = [0, 1, 2, 3].map((k) => { const c = makeCanvas(32, 32); c.getContext('2d').drawImage(IMG.tiles, k * 32, 0, 32, 32, 0, 0, 32, 32); return c; });
 const tileAvg = tileCanvases.map((c) => { // grass, road, paving, river
   const d = c.getContext('2d').getImageData(0, 0, 32, 32).data; let r = 0, g = 0, b = 0;
@@ -421,6 +441,7 @@ function drawCharacter(c, x, y, i, o = {}) {
 }
 // Head-only portraits, cut from every pose. The HUD picks the face that matches what each character is doing.
 function headKey(i, o) {
+  if (i === 4) return 'pinky';
   const I = META.actors.index;
   if (o.mood === 'annoyed') return I['emote' + i][0];                      // missed, NOODLED, or lost
   if (o.arms) return I['base' + i][3];                                     // Double Trouble, a win, Pinky's arrival
@@ -430,6 +451,7 @@ function headKey(i, o) {
   return I['base' + i][0];
 }
 function blitHead(c, key, x, y, f = 1) {
+  if (key === 'pinky') { c.drawImage(pinkyHead, Math.round(x), Math.round(y), 52 * f, 46 * f); return; }
   const H = META.heads, j = H.index[key]; if (j === undefined) return;
   c.drawImage(IMG.heads, (j % H.cols) * H.w, Math.floor(j / H.cols) * H.h, H.w, H.h, Math.round(x), Math.round(y), H.w * f, H.h * f);
 }
@@ -1026,7 +1048,7 @@ function renderCelebrate(dt) {
   drawChant(c, vx + V.face[0], vy + V.face[1], vy, CELE_CHANTS[Math.floor(t / 1500) % CELE_CHANTS.length], t, true);
   // the family on the road, everyone celebrating, the winner lifting the golden ball
   const winAv = G.avatars[Cele.winner], others = SELECTABLE_AVATARS.filter((k) => k !== winAv);
-  (THREE_CHARACTER_VERSION ? [215, 652] : [165, 295, 652]).forEach((x, k) => {
+  (others.length === 3 ? [165, 295, 652] : [120, 230, 605, 715]).forEach((x, k) => {
     const av = others[k], arms = Math.floor((t + k * 450) / 900) % 2 === 0;
     shade(x, 452, 26);
     drawCharacter(c, x, 452, av, { scale: 3.6, arms, punch: !arms, time: t + k * 130, jump: hop(k + 4, 3), flip: x > 418 });
@@ -1194,7 +1216,14 @@ function drawRaceScene(e, t) {
   for (const p of Race.crumbs) { const a = t - p.born; c.fillStyle = p.col; c.fillRect(Math.round(p.x + p.vx * a), Math.round(p.y + p.vy * a + .0007 * a * a), 2, 2); }
 }
 function drawEater(c, x, y, i, e, t) {
-  const av = G.avatars[i], f = 2, flip = i === 1, em = META.eat[av], I = META.actors.index;
+  const av = G.avatars[i], f = 2, flip = i === 1;
+  if (av === 4) {
+    const won = e.stage === 'result' && e.winner === i;
+    const lost = e.stage === 'result' && e.winner !== null && !won;
+    drawCharacter(c, x, y, av, { scale: 4, flip, arms: won, mood: lost ? 'annoyed' : null, eating: !won && !lost, eaten: Math.min(1, e.bites[i] / PINKY_BITES), time: t });
+    return;
+  }
+  const em = META.eat[av], I = META.actors.index;
   const won = e.stage === 'result' && e.winner === i, lost = e.stage === 'result' && e.winner !== null && !won;
   c.fillStyle = '#17372d40'; c.beginPath(); c.ellipse(x, y + 2, 30, 7, 0, 0, Math.PI * 2); c.fill();
   if (won) { drawCharacter(c, x, y, av, { scale: 4, arms: true, jump: Math.max(0, Math.sin(t * .012)) * 5, flip }); return; }
@@ -1549,11 +1578,11 @@ const outlineTmp = makeCanvas(128, 112), outlineGold = makeCanvas(128, 112);
 function buildSelect() {
   for (let p = 0; p < 2; p++) {
     const stage = $('#carousel' + p);
-    for (let k of SELECTABLE_AVATARS) {
+    for (const [index, k] of SELECTABLE_AVATARS.entries()) {
       const b = document.createElement('button'); b.type = 'button'; b.className = 'champ';
       b.setAttribute('aria-label', 'Player ' + (p + 1) + ': ' + CHARACTERS[k].name + '. ' + CHARACTERS[k].desc);
       const c = makeCanvas(128, 112); b.append(c);
-      b.addEventListener('click', (e) => { if (Select.suppress[p]) { e.preventDefault(); return; } choose(p, k); });
+      b.addEventListener('click', (e) => { if (Select.suppress[p]) { e.preventDefault(); return; } choose(p, index); });
       stage.append(b); Select.buttons[p].push({ b, c, x: c.getContext('2d') });
     }
     stage.addEventListener('pointerdown', (e) => {
@@ -1598,8 +1627,8 @@ function setCpu(on) {
   $('#prev1').disabled = on; $('#next1').disabled = on; syncNames();
 }
 function syncNames() {
-  $('#champ-name0').textContent = CHARACTERS[Select.picks[0]].name;
-  $('#champ-name1').textContent = G.cpu && Select.reveal === null ? '???' : CHARACTERS[Select.picks[1]].name;
+  $('#champ-name0').textContent = CHARACTERS[SELECTABLE_AVATARS[Select.picks[0]]].name;
+  $('#champ-name1').textContent = G.cpu && Select.reveal === null ? '???' : CHARACTERS[SELECTABLE_AVATARS[Select.picks[1]]].name;
 }
 function selectKey(e) {
   const k = e.key;
@@ -1615,10 +1644,10 @@ function go() {
   // Champions chosen: call each name, hold the moment, then fade to black and out onto the road.
   if (Select.locked) return;
   Select.locked = true;
-  G.avatars = [Select.picks[0], Select.picks[1]];
+  G.avatars = [SELECTABLE_AVATARS[Select.picks[0]], SELECTABLE_AVATARS[Select.picks[1]]];
   if (G.cpu) {
     const pool = SELECTABLE_AVATARS.filter((i) => i !== G.avatars[0]); G.avatars[1] = pool[Math.floor(Math.random() * pool.length)];
-    Select.reveal = G.avatars[1]; Select.picks[1] = G.avatars[1]; Select.angles[1] = G.avatars[1] * SELECT_STEP; // the CPU steps out of the shadows
+    Select.reveal = G.avatars[1]; Select.picks[1] = SELECTABLE_AVATARS.indexOf(G.avatars[1]); Select.angles[1] = Select.picks[1] * SELECT_STEP; // the CPU steps out of the shadows
   }
   G.names = [CHARACTERS[G.avatars[0]].name, CHARACTERS[G.avatars[1]].name];
   syncNames(); Sound.unlock();
@@ -1689,7 +1718,7 @@ function renderSelect(dt) {
       b.style.filter = isFront ? 'none' : 'brightness(' + (.84 + depth * .16).toFixed(2) + ')';
       b.setAttribute('aria-pressed', String(!G.cpu || p === 0 ? Select.picks[p] === k : false));
       const hidden = p === 1 && G.cpu && Select.reveal === null, cheer = Select.picks[p] === k && (Select.locked || now - Select.cheerAt[p] < 900);
-      drawChamp(x, k, p, isFront && !hidden, cheer, hidden && true);
+      drawChamp(x, SELECTABLE_AVATARS[k], p, isFront && !hidden, cheer, hidden && true);
     });
   }
   const gb = $('#go-ball').getContext('2d'); gb.clearRect(0, 0, 48, 48); drawBall(gb, 24, 24, 24, Math.floor(Select.time / 700) * Math.PI / 2);
