@@ -1668,13 +1668,19 @@ function renderSelect(dt) {
     const target = Select.picks[p] * SELECT_STEP;
     if (p === 1 && G.cpu && Select.reveal === null) Select.angles[1] = (Select.angles[1] + dt * .00065) % (Math.PI * 2);
     else if (!Select.gesture[p]?.moved) { const diff = Math.atan2(Math.sin(target - Select.angles[p]), Math.cos(target - Select.angles[p])); Select.angles[p] += REDUCED ? diff : diff * Math.min(1, dt * .012); }
-    const cx = p === 0 ? 46 : 54, skew = p === 0 ? 7 : -7;
+    // Scale the ellipse to the roster: three characters sit symmetrically behind
+    // the selected champion, while larger rosters gain room around the arc.
+    // Keep the established four-character layout unchanged.
+    const count = SELECTABLE_AVATARS.length;
+    const radius = count <= 3 ? 19 : count === 4 ? 25 : count === 5 ? 26 : 27;
+    const cx = p === 0 ? 46 : 54;
+    const skew = (count <= 3 ? 0 : count === 4 ? 7 : 3) * (p === 0 ? 1 : -1);
     Select.buttons[p].forEach(({ b, c, x }, k) => {
       const a = k * SELECT_STEP - Select.angles[p], front = Math.cos(a), side = Math.sin(a), depth = (front + 1) / 2;
       const isFront = front > .92;
       // Shift only the front-most champ inward in the three-character variant.
       const inwardNudgePx = THREE_CHARACTER_VERSION && isFront ? (p === 0 ? 15 : -15) : 0;
-      b.style.left = 'calc(' + (cx + side * 25 + (1 - front) * skew).toFixed(3) + '% + ' + inwardNudgePx + 'px)';
+      b.style.left = 'calc(' + (cx + side * radius + (1 - front) * skew).toFixed(3) + '% + ' + inwardNudgePx + 'px)';
       b.style.top = rowPct(346 + depth * 58) + '%';
       b.style.transform = 'translate(-50%, -89.3%) scale(' + (1 + depth * .38).toFixed(3) + ')';
       b.style.zIndex = String(10 + Math.round(depth * 20));
