@@ -335,7 +335,26 @@ dialog .keys { color: var(--blush); }
 .btn.ghost { background: none; color: var(--gold); }
 .btn:active { translate: 0 2px; box-shadow: 1px 1px 0 var(--shadow); }
 #learn-open, #learn .btn { text-transform: uppercase; }
-#learn-open { flex: none; }
+/* Opening-screen hierarchy: primary play button, quieter help link. */
+.boot #boot-prompt.boot-play {
+  flex: none; min-height: 48px; min-width: min(260px, 75vw);
+  padding: 11px 22px; margin: 0;
+  border: 2px solid var(--gold); background: var(--gold);
+  color: var(--panel-solid); box-shadow: 3px 3px 0 var(--shadow);
+  font: clamp(9px, min(1.5vw, 2.5vh), 13px)/1.5 var(--arcade);
+  animation: none; cursor: pointer;
+}
+.boot #boot-prompt.boot-play:not(:disabled) { animation: blink 1.5s steps(2) infinite; }
+.boot #boot-prompt.boot-play:disabled { opacity: .65; cursor: progress; }
+.boot #boot-prompt.boot-play:active { translate: 0 2px; box-shadow: 1px 1px 0 var(--shadow); }
+#learn-open {
+  flex: none; min-height: 30px; padding: 4px 8px;
+  border: 0; background: transparent; box-shadow: none;
+  color: var(--sky-text); font: clamp(8px, min(1.2vw, 2vh), 10px)/1.5 var(--arcade);
+  text-decoration: none;
+}
+#learn-open:hover, #learn-open:focus-visible { color: var(--gold); text-decoration: underline; }
+#learn-open:active { translate: none; box-shadow: none; }
 #learn[open] {
   display: flex; flex-direction: column; width: min(640px, calc(100% - var(--sl) - var(--sr) - 28px));
   max-height: calc(100dvh - var(--st) - var(--sb) - 28px); padding: 0;
