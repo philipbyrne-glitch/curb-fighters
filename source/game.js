@@ -1640,9 +1640,11 @@ function renderSelect(dt) {
     Select.buttons[p].forEach(({ b, c, x }, k) => {
       const a = k * SELECT_STEP - Select.angles[p], front = Math.cos(a), side = Math.sin(a), depth = (front + 1) / 2;
       const isFront = front > .92;
-      b.style.left = (cx + side * 25 + (1 - front) * skew) + '%';
+      // Shift only the front-most champ inward in the three-character variant.
+      const inwardNudgePx = THREE_CHARACTER_VERSION && isFront ? (p === 0 ? 15 : -15) : 0;
+      b.style.left = 'calc(' + (cx + side * 25 + (1 - front) * skew).toFixed(3) + '% + ' + inwardNudgePx + 'px)';
       b.style.top = rowPct(346 + depth * 58) + '%';
-      b.style.transform = 'translate(calc(-50% + ' + (THREE_CHARACTER_VERSION && Select.picks[p] === k ? (p === 0 ? 15 : -15) : 0) + 'px), -89.3%) scale(' + (1 + depth * .38).toFixed(3) + ')';
+      b.style.transform = 'translate(-50%, -89.3%) scale(' + (1 + depth * .38).toFixed(3) + ')';
       b.style.zIndex = String(10 + Math.round(depth * 20));
       b.style.filter = isFront ? 'none' : 'brightness(' + (.84 + depth * .16).toFixed(2) + ')';
       b.setAttribute('aria-pressed', String(!G.cpu || p === 0 ? Select.picks[p] === k : false));
