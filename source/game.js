@@ -497,7 +497,7 @@ const G = {
   power: .01, aim: .01, meterClock: 0, drag: null,
   shot: null, ball: null, caught: false, rest: null,
   throwNo: 0, bombs: [2, 2], noodleUntil: 0, noodleCaller: null, noodleThrow: -1, noodleAt: -1e9,
-  nextDog: 0, dogStart: 0, dogUntil: 0, nextCar: 0, carStart: 0, carUntil: 0, carDir: 1, carColor: 0, waitVariants: [0, 0, 0, 0],
+  nextDog: 0, dogStart: 0, dogUntil: 0, nextCar: 0, carStart: 0, carUntil: 0, carDir: 1, carColor: 0, carCount: 0, waitVariants: [0, 0, 0, 0],
   nextCollector: 0, collectorStart: 0, collectorUntil: 0, collectorPair: false,
   prepStart: 0, prepBops: 0, resultAt: 0, resultHold: 0,
   boost: [false, false], pinkySeen: false, pinky: null,
@@ -677,7 +677,7 @@ function drawScene(t) {
   }
   // Neighbourhood.
   if (t < G.dogUntil) { const u = (t - G.dogStart) / (G.dogUntil - G.dogStart), x = -9 + u * 18, y = -4.25; add(x, y, () => { shadow(x, y, 27, 6); const p = project(x, y), q = project(x + .2, y); ctx.globalAlpha = veil(p, 40 * zm, 76 * zm); drawWalker(ctx, p.x, p.y, t, q.x < p.x, zm); ctx.globalAlpha = 1; }); }
-  if (G.phase === 'traffic' && t < G.carUntil) { const x = (-13 + (t - G.carStart) / CAR_MS * 26) * G.carDir; add(x, .5, () => { shadow(x, .5, 45, 13); const p = project(x, .5), q = project(x + .2 * G.carDir, .5); ctx.globalAlpha = veil(p, 52 * zm, 80 * zm); drawCar(ctx, p.x, p.y, q.y > p.y, q.x < p.x, G.carColor, zm); ctx.globalAlpha = 1; }); }
+  if (t >= G.carStart && t < G.carUntil) { const x = (-13 + (t - G.carStart) / CAR_MS * 26) * G.carDir; add(x, .5, () => { shadow(x, .5, 45, 13); const p = project(x, .5), q = project(x + .2 * G.carDir, .5); ctx.globalAlpha = veil(p, 52 * zm, 80 * zm); drawCar(ctx, p.x, p.y, q.y > p.y, q.x < p.x, G.carColor, zm); ctx.globalAlpha = 1; }); }
   if (t < G.collectorUntil) {
     for (let k = 0; k < (G.collectorPair ? 2 : 1); k++) {
       const e = t - G.collectorStart - k * 1300; if (e < 0) continue;
@@ -875,7 +875,7 @@ function startMatch() {
   Object.assign(G, {
     phase: 'ready', shot: null, ball: null, rest: null, caught: false, drag: null, throwNo: 0, bombs: [2, 2], boost: [false, false],
     noodleCaller: null, noodleThrow: -1, noodleAt: -1e9, noodleUntil: 0, pinkySeen: false, pinky: null, victor: null, victoryDone: false,
-    nextCar: 5 + Math.floor(Math.random() * 3), carUntil: 0, nextDog: 2 + Math.floor(Math.random() * 3), dogUntil: 0,
+    nextCar: 5 + Math.floor(Math.random() * 3), carUntil: 0, carCount: 0, nextDog: 2 + Math.floor(Math.random() * 3), dogUntil: 0,
     nextCollector: 3 + Math.floor(Math.random() * 3), collectorUntil: 0, cpuToken: '', cpuNoodleThrow: -1, cpuNoodleAt: 0,
   });
   view.camera = view.target = 0; view.zoom = 1; view.focus = 0; groundKey = '';
@@ -960,10 +960,12 @@ function beginTraffic() {
   // Generic cars always available. Phil's VW and Kim's Qashqai are independently
   // eligible only when their respective character is NOT one of the two players.
   // Both may appear if neither is playing; neither if both are playing.
-  const trafficCars = [0, 1];
-  if (!G.avatars.includes(0)) trafficCars.push(2); // Phil
-  if (!G.avatars.includes(3)) trafficCars.push(3); // Kim
-  G.carColor = trafficCars[Math.floor(Math.random() * trafficCars.length)];
+  const familyCars = [];
+  if (!G.avatars.includes(0)) familyCars.push(2); // Phil
+  if (!G.avatars.includes(3)) familyCars.push(3); // Kim
+  // Put absent family members' cars in the first two traffic events.
+  G.carColor = G.carCount < familyCars.length ? familyCars[G.carCount] : [0, 1, ...familyCars][Math.floor(Math.random() * (2 + familyCars.length))];
+  G.carCount++;
   G.waitVariants = [Math.floor(Math.random() * 4), Math.floor(Math.random() * 2), Math.floor(Math.random() * 2), Math.floor(Math.random() * 2)];
   G.phase = 'traffic'; G.engineAt = 0; G.carBeeped = false;
   showBanner('CAR!', 'EVERYONE ON THE PAVEMENT', '', 1900);
@@ -1261,7 +1263,7 @@ function updateCPU() {
    10. UPDATE LOOP
    ===================================================================== */
 function updateEngine() {
-  const pk = G.pinky, van = G.phase === 'pinky' && pk && pk.stage === 'arrive', car = G.phase === 'traffic' && G.clock < G.carUntil; // departure has its own screech
+  const pk = G.pinky, van = G.phase === 'pinky' && pk && pk.stage === 'arrive', car = G.carStart > 0 && G.clock < G.carUntil; // departure has its own screech
   if ((!van && !car) || G.clock < G.engineAt) return;
   G.engineAt = G.clock + 90;
   const el = van ? G.clock - pk.stageStart : G.clock - G.carStart, u = clamp(el / (van ? PD[pk.stage] : CAR_MS));
@@ -1300,7 +1302,8 @@ function update(dt) {
     if (f >= 1 && !s.done) { s.done = true; onFlightEnd(s); }
   }
   if (G.phase === 'result' && G.clock - G.resultAt >= G.resultHold) endTurn();
-  if (G.phase === 'traffic' && G.clock >= G.carUntil) { G.phase = 'ready'; G.prepStart = G.clock; hud(); }
+  // The car remains visible, but players can throw once its rear has passed them.
+  if (G.phase === 'traffic' && G.clock >= G.carStart + CAR_MS * .68) { G.phase = 'ready'; G.prepStart = G.clock; hud(); }
   if (G.phase === 'pinky') updatePinky();
   if (G.victor !== null && !G.victoryDone && G.phase !== 'flight' && G.clock - G.victoryAt >= 4800) completeMatch();
   updateEngine();
@@ -1349,7 +1352,7 @@ function hud() {
     b.querySelector('small').textContent = G.cpu && i === 1 ? 'CPU ×' + G.bombs[i] : '×' + G.bombs[i];
     b.setAttribute('aria-label', G.names[i] + ' NOODLES!, ' + G.bombs[i] + ' left' + (i === 0 ? ', key X' : ', key N'));
   }
-  for (const mode of ['timing', 'drag']) { const b = $('#mode-' + mode); b.setAttribute('aria-pressed', G.controlMode === mode); b.disabled = ['power', 'aim', 'dragging', 'flight', 'traffic', 'pinky'].includes(P); }
+
   hudFrame();
 }
 function hintText() {
@@ -1475,9 +1478,8 @@ function setControlMode(mode) {
   G.controlMode = mode; try { localStorage.setItem('curb-fighters-control', mode); } catch { /* ignore */ }
   hud();
 }
-try { const saved = localStorage.getItem('curb-fighters-control'); if (saved === 'drag' || saved === 'timing') G.controlMode = saved; } catch { /* ignore */ }
-$('#mode-timing').addEventListener('click', () => setControlMode('timing'));
-$('#mode-drag').addEventListener('click', () => setControlMode('drag'));
+// Timing is the only supported throw mode; ignore any old drag preference.
+G.controlMode = 'timing';
 const SND_ON = 'M1 5h3l4-4h1v14H8l-4-4H1z M11 5h1v6h-1z M13 3h1v10h-1z', SND_OFF = 'M1 5h3l4-4h1v14H8l-4-4H1z M10 5h2v2h-2z M14 5h2v2h-2z M12 7h2v2h-2z M10 9h2v2h-2z M14 9h2v2h-2z';
 function syncAudioControls() { // the title sliders and the in-game panel share one set of levels
   for (const kind of ['music', 'sfx']) {
@@ -1700,7 +1702,12 @@ function desiredMusic() {
   }
   return null;
 }
-function bootStart() { if (G.screen !== 'boot' || !booted) return; Sound.unlock(); Sound.say('voice-curbfighters', 'title'); Sound.sfx('go'); setScreen('select'); }
+let introTitleAnnounced = false;
+function announceIntroTitle() {
+  if (introTitleAnnounced || G.screen !== 'boot' || Sound.locked || !Sound.prefs.on) return;
+  introTitleAnnounced = Sound.say('voice-curbfighters', 'title');
+}
+function bootStart() { if (G.screen !== 'boot' || !booted) return; Sound.unlock(); Sound.sfx('go'); setScreen('select'); }
 let booted = false;
 $('#boot').addEventListener('click', (e) => { if (e.target.closest('#audio-panel')) return; bootStart(); });
 $('#celebrate').addEventListener('pointerdown', (e) => { G.lastInput = e.pointerType === 'mouse' ? 'mouse' : 'touch'; $('#cele-prompt').textContent = G.lastInput === 'touch' ? 'TAP TO PLAY AGAIN' : 'CLICK OR PRESS ANY KEY'; leaveCelebration(); });
@@ -1710,7 +1717,7 @@ for (const kind of ['music', 'sfx']) for (const id of [kind + '-level', 'g-' + k
   $('#' + id).addEventListener('input', (e) => { Sound.set(kind, Number(e.target.value) / 100); Sound.unlock(); syncAudioControls(); if (kind === 'sfx') Sound.sfx('bop'); });
 }
 syncAudioControls();
-$('#enable-audio').addEventListener('click', () => { Sound.unlock(); });
+$('#enable-audio').addEventListener('click', () => { Sound.unlock(); announceIntroTitle(); });
 const enableBtn = $('#enable-audio');
 function syncEnable() { enableBtn.hidden = !Sound.locked || !Sound.prefs.on; }
 Sound.onChange(syncEnable);
@@ -1768,6 +1775,9 @@ function frame(now) {
 try { await Promise.race([Promise.all(['19px "CF Arcade"', '19px "Press Start 2P"', '21px "CF Pixel"'].map((f) => document.fonts.load(f).catch(() => null))), new Promise((r) => setTimeout(r, 2500))]); } catch { /* fallbacks */ }
 buildSelect(); syncSoundButton(); Sound.init(); Sound.decode('intro'); Sound.decode('select'); Sound.decode('voice-curbfighters');
 booted = true;
+// Title animation begins 550ms after the boot screen appears. Browsers that
+// allow audio play the voice there; otherwise ENABLE AUDIO plays it on tap.
+setTimeout(announceIntroTitle, 550);
 const prompt = $('#boot-prompt'); prompt.textContent = COARSE ? 'TAP TO START' : 'HIT ANY KEY TO START'; prompt.classList.add('ready');
 $('#boot').focus({ preventScroll: true });
 requestAnimationFrame(frame);
