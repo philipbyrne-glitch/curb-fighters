@@ -1700,7 +1700,12 @@ function desiredMusic() {
   }
   return null;
 }
-function bootStart() { if (G.screen !== 'boot' || !booted) return; Sound.unlock(); Sound.say('voice-curbfighters', 'title'); Sound.sfx('go'); setScreen('select'); }
+let introTitleAnnounced = false;
+function announceIntroTitle() {
+  if (introTitleAnnounced || G.screen !== 'boot' || Sound.locked || !Sound.prefs.on) return;
+  introTitleAnnounced = Sound.say('voice-curbfighters', 'title');
+}
+function bootStart() { if (G.screen !== 'boot' || !booted) return; Sound.unlock(); Sound.sfx('go'); setScreen('select'); }
 let booted = false;
 $('#boot').addEventListener('click', (e) => { if (e.target.closest('#audio-panel')) return; bootStart(); });
 $('#celebrate').addEventListener('pointerdown', (e) => { G.lastInput = e.pointerType === 'mouse' ? 'mouse' : 'touch'; $('#cele-prompt').textContent = G.lastInput === 'touch' ? 'TAP TO PLAY AGAIN' : 'CLICK OR PRESS ANY KEY'; leaveCelebration(); });
@@ -1710,7 +1715,7 @@ for (const kind of ['music', 'sfx']) for (const id of [kind + '-level', 'g-' + k
   $('#' + id).addEventListener('input', (e) => { Sound.set(kind, Number(e.target.value) / 100); Sound.unlock(); syncAudioControls(); if (kind === 'sfx') Sound.sfx('bop'); });
 }
 syncAudioControls();
-$('#enable-audio').addEventListener('click', () => { Sound.unlock(); });
+$('#enable-audio').addEventListener('click', () => { Sound.unlock(); announceIntroTitle(); });
 const enableBtn = $('#enable-audio');
 function syncEnable() { enableBtn.hidden = !Sound.locked || !Sound.prefs.on; }
 Sound.onChange(syncEnable);
@@ -1768,6 +1773,9 @@ function frame(now) {
 try { await Promise.race([Promise.all(['19px "CF Arcade"', '19px "Press Start 2P"', '21px "CF Pixel"'].map((f) => document.fonts.load(f).catch(() => null))), new Promise((r) => setTimeout(r, 2500))]); } catch { /* fallbacks */ }
 buildSelect(); syncSoundButton(); Sound.init(); Sound.decode('intro'); Sound.decode('select'); Sound.decode('voice-curbfighters');
 booted = true;
+// Title animation begins 550ms after the boot screen appears. Browsers that
+// allow audio play the voice there; otherwise ENABLE AUDIO plays it on tap.
+setTimeout(announceIntroTitle, 550);
 const prompt = $('#boot-prompt'); prompt.textContent = COARSE ? 'TAP TO START' : 'HIT ANY KEY TO START'; prompt.classList.add('ready');
 $('#boot').focus({ preventScroll: true });
 requestAnimationFrame(frame);
