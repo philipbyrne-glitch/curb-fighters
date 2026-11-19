@@ -417,3 +417,7 @@ dialog .keys { color: var(--blush); }
   .race.counting-down .race-status, .race.nom-start .race-status { font-size: clamp(28px, 10vh, 62px); }
   .race-instructions { padding: 5px 10px; font-size: 9px; }
 }
+
+/* When NOODLES causes a miss, keep only the smaller score feedback. */
+.float.small-only { font-size: clamp(14px, min(2.6vw, 5vh), 28px); }
+.float.small-only small { font-size: .5em; }
