@@ -496,7 +496,7 @@ const G = {
   match: { player: 0, scores: [0, 0], halfway: false, fiveStreak: 0, winner: null },
   power: .01, aim: .01, meterClock: 0, drag: null,
   shot: null, ball: null, caught: false, rest: null,
-  throwNo: 0, bombs: [2, 2], noodleUntil: 0, noodleCaller: null, noodleAt: -1e9,
+  throwNo: 0, bombs: [2, 2], noodleUntil: 0, noodleCaller: null, noodleThrow: -1, noodleAt: -1e9,
   nextDog: 0, dogStart: 0, dogUntil: 0, nextCar: 0, carStart: 0, carUntil: 0, carDir: 1, carColor: 0, waitVariants: [0, 0, 0, 0],
   nextCollector: 0, collectorStart: 0, collectorUntil: 0, collectorPair: false,
   prepStart: 0, prepBops: 0, resultAt: 0, resultHold: 0,
@@ -829,7 +829,7 @@ function onImpact(s) {
     const defaults = { near: 'SO CLOSE!', short: 'NOT ENOUGH!', long: 'TOO MUCH!', left: 'A BIT LEFT!', right: 'A BIT RIGHT!' };
     const words = phrase(category, defaults[category], G.throwNo);
     // Noodles bubble remains legible; retain the smaller NO POINTS line only.
-    const noodlesOnThisThrow = G.noodleCaller !== null && G.noodleCaller !== G.match.player && G.noodleAt >= s.start;
+    const noodlesOnThisThrow = G.noodleCaller !== null && G.noodleCaller !== G.match.player && G.noodleThrow === G.throwNo;
     showFloat(noodlesOnThisThrow ? '' : words, 'NO POINTS', true);
   }
 }
@@ -874,7 +874,7 @@ function startMatch() {
   m.player = 0; m.scores = [0, 0]; m.halfway = false; m.fiveStreak = 0; m.winner = null;
   Object.assign(G, {
     phase: 'ready', shot: null, ball: null, rest: null, caught: false, drag: null, throwNo: 0, bombs: [2, 2], boost: [false, false],
-    noodleCaller: null, noodleAt: -1e9, noodleUntil: 0, pinkySeen: false, pinky: null, victor: null, victoryDone: false,
+    noodleCaller: null, noodleThrow: -1, noodleAt: -1e9, noodleUntil: 0, pinkySeen: false, pinky: null, victor: null, victoryDone: false,
     nextCar: 5 + Math.floor(Math.random() * 3), carUntil: 0, nextDog: 2 + Math.floor(Math.random() * 3), dogUntil: 0,
     nextCollector: 3 + Math.floor(Math.random() * 3), collectorUntil: 0, cpuToken: '', cpuNoodleThrow: -1, cpuNoodleAt: 0,
   });
@@ -886,7 +886,7 @@ function startMatch() {
 }
 function ready() {
   const m = G.match, p = m.player;
-  Object.assign(G, { noodleCaller: null, noodleAt: -1e9, noodleUntil: 0, caught: false, shot: null, ball: null, drag: null, power: .01, aim: .01, meterClock: 0, queuedStart: false, spurl: null });
+  Object.assign(G, { noodleCaller: null, noodleThrow: -1, noodleAt: -1e9, noodleUntil: 0, caught: false, shot: null, ball: null, drag: null, power: .01, aim: .01, meterClock: 0, queuedStart: false, spurl: null });
   if (G.boost[p] && m.halfway) { m.halfway = false; m.fiveStreak = 0; } // 99 BOOST always starts a fresh curb streak
   G.rest = m.halfway ? null : { x: sign() * .45, y: HOME[p] - sign() * .18, z: .14 + BALL_Z, spin: 0 };
   view.target = p === 0 ? 0 : Math.PI / 2; if (REDUCED) view.camera = view.target; // P2: bottom-right, throwing right to left
@@ -951,7 +951,7 @@ function requestStart(p) {
 const nextKeyPlayer = () => G.phase === 'result' && G.shot && !G.shot.outcome.points ? 1 - G.match.player : G.match.player;
 function noodle(i) {
   if (i === G.match.player || G.bombs[i] <= 0 || !['power', 'aim', 'dragging'].includes(G.phase) || G.victor !== null || G.clock < G.noodleUntil) return; // one per throw
-  G.bombs[i]--; G.noodleUntil = G.clock + 6500; G.noodleCaller = i; G.noodleAt = G.clock;
+  G.bombs[i]--; G.noodleUntil = G.clock + 6500; G.noodleCaller = i; G.noodleThrow = G.throwNo; G.noodleAt = G.clock;
   Sound.sfx('noodle', Sound.say('voice-noodles')); hud(); // the kids' shout, with the buzz underneath
 }
 function beginTraffic() {
