@@ -30,14 +30,15 @@ const COARSE = matchMedia('(pointer: coarse)').matches;
 const PORTRAIT = matchMedia('(max-width: 700px) and (orientation: portrait)');
 const anyDialog = () => !!document.querySelector('dialog[open]');
 const THREE_CHARACTER_VERSION = window.CF_THREE_CHARACTER_VERSION === true;
-// Pinky (avatar 4) is implemented but SECRET. Do not include him in the
-// selection carousel, CPU pool, or victory crowd until a genuine unlock
-// mechanism is designed. Keeping all gameplay assets/code ready for later.
-const PINKY_UNLOCKED = false;
+// Secret character: earned by ten consecutive, roughly one-second-apart
+// cooperative tap pairs in Pinky's 99 challenge. Kept on this device.
+const PINKY_UNLOCK_KEY = 'curb-fighters:pinky-unlocked:v1';
+let PINKY_UNLOCKED = false;
+try { PINKY_UNLOCKED = localStorage.getItem(PINKY_UNLOCK_KEY) === 'yes'; } catch { /* private mode */ }
 const SELECTABLE_AVATARS = THREE_CHARACTER_VERSION
   ? [0, 1, 2, ...(PINKY_UNLOCKED ? [4] : [])]
   : [0, 1, 2, 3, ...(PINKY_UNLOCKED ? [4] : [])];
-const SELECT_STEP = Math.PI * 2 / SELECTABLE_AVATARS.length;
+let SELECT_STEP = Math.PI * 2 / SELECTABLE_AVATARS.length;
 const CHARACTERS = [
   { name: 'PHIL', desc: 'Bald, black glasses, white T-shirt and blue trousers' },
   { name: 'SHAY', desc: 'Blond hair, yellow-and-white striped T-shirt, teal shorts and red trainers' },
@@ -1121,7 +1122,8 @@ function beginPinky(post) {
   G.pinkySeen = true;
   const scores = G.match.scores;
   const handicapped = Math.abs(scores[0] - scores[1]) >= 20 ? (scores[0] > scores[1] ? 0 : 1) : null;
-  G.pinky = { stage: 'heard', stageStart: G.clock, bites: [0, 0], lastTap: [-1e9, -1e9], handicapped, winner: null, wonAt: null, post };
+  G.pinky = { stage: 'heard', stageStart: G.clock, bites: [0, 0], lastTap: [-1e9, -1e9], handicapped, winner: null, wonAt: null, post,
+    sync: { pending: [null, null], pairs: 0, lastPair: null }, unlockFlashAt: null };
   G.phase = 'pinky'; G.drag = null; G.ball = null; G.rest = null; view.target = 0; G.engineAt = 0;
   G.nextCar = Math.max(G.nextCar, G.throwNo + 2);
   Sound.music('pinky'); // the tune arrives before the van does
@@ -1129,9 +1131,37 @@ function beginPinky(post) {
   showBanner('WAIT, DO YOU HEAR…', '', 'listen', PD.heard);
   hud();
 }
+// Ten matching tap pairs: within 350ms of each other, each pair 650-1450ms
+// after the previous one. Mistimed beats restart the streak, not the race.
+function trackPinkyUnlock(e, player, at) {
+  if (PINKY_UNLOCKED || G.cpu || !e.sync) return;
+  const sync = e.sync;
+  // A waiting partner's tap expires; starting a fresh pair is still allowed.
+  if (sync.pending[1 - player] !== null && at - sync.pending[1 - player] > 350) {
+    sync.pending = [null, null];
+    sync.pairs = 0;
+    sync.lastPair = null;
+  }
+  sync.pending[player] = at;
+  if (sync.pending[1 - player] === null) return;
+  const gap = Math.abs(sync.pending[0] - sync.pending[1]);
+  sync.pending = [null, null];
+  if (gap > 350) { sync.pairs = 0; sync.lastPair = null; return; }
+  const interval = sync.lastPair === null ? null : at - sync.lastPair;
+  sync.pairs = interval === null || interval < 650 || interval > 1450 ? 1 : sync.pairs + 1;
+  sync.lastPair = at;
+  if (sync.pairs !== 10) return;
+  PINKY_UNLOCKED = true;
+  try { localStorage.setItem(PINKY_UNLOCK_KEY, 'yes'); } catch { /* still unlocked this session */ }
+  PinkyUnlock.pendingReveal = true;
+  e.unlockFlashAt = at;
+  Sound.say('voice-pinkys');
+}
+const PinkyUnlock = { pendingReveal: false };
 function bite(p) {
   const e = G.pinky;
   if (!e || e.stage !== 'race' || e.bites[p] >= PINKY_BITES || G.clock - e.lastTap[p] < 55) return;
+  trackPinkyUnlock(e, p, G.clock);
   e.lastTap[p] = G.clock;
   // Keep fractional progress for the score bar, cone animation and winner check.
   e.bites[p] = Math.min(PINKY_BITES, e.bites[p] + (e.handicapped === p ? PINKY_LEADER_BITE_VALUE : 1));
@@ -1192,6 +1222,7 @@ function renderRace() {
       if (G.lastCount !== n) { G.lastCount = n; Sound.sfx('countdown', n); }
     }
   }
+  else if (e.unlockFlashAt !== null && G.clock - e.unlockFlashAt < 1900) status = 'PINKY UNLOCKED!';
   else if (e.stage === 'race' && el < 750) status = 'NOM!';
   else if (e.stage === 'result') status = e.winner === null ? 'DEAD HEAT!' : '99 CHAMPION!';
   else if (e.winner !== null) status = 'LAST LICKS!';
@@ -1207,6 +1238,11 @@ function renderRace() {
 }
 const raceCtx = $('#race-scene').getContext('2d');
 const Race = { seen: [0, 0], crumbs: [] };
+const flashVan = makeCanvas(META.vanSide.w, META.vanSide.h);
+flashVan.getContext('2d').drawImage(IMG.vanSide, 0, 0);
+flashVan.getContext('2d').globalCompositeOperation = 'source-in';
+flashVan.getContext('2d').fillStyle = '#ffffff';
+flashVan.getContext('2d').fillRect(0, 0, flashVan.width, flashVan.height);
 function drawRaceScene(e, t) {
   const c = raceCtx; c.setTransform(1, 0, 0, 1, 0, 0); c.imageSmoothingEnabled = false;
   drawStreetBackdrop(c, t);
@@ -1216,6 +1252,9 @@ function drawRaceScene(e, t) {
   // Ice-cream race keeps its original parked-van ellipse.
   c.fillStyle = '#2a204055'; c.beginPath(); c.ellipse(418, 372, 150, 9, 0, 0, Math.PI * 2); c.fill();
   c.drawImage(IMG.vanSide, vx, vy);
+  // The van pulses solid white when the secret cooperative rhythm succeeds.
+  if (e.unlockFlashAt !== null && t - e.unlockFlashAt < 1800 &&
+      Math.floor((t - e.unlockFlashAt) / 180) % 2 === 0) c.drawImage(flashVan, vx, vy);
   drawChant(c, vx + V.face[0], vy + V.face[1], vy, raceChant(e, t), t);
   for (let i = 0; i < 2; i++) drawEater(c, i === 0 ? 214 : 622, 460, i, e, t);
   Race.crumbs = Race.crumbs.filter((p) => t - p.born < 520);
@@ -1579,7 +1618,7 @@ $('#restart-confirm').addEventListener('click', () => { $('#restart').close(); G
 /* =====================================================================
    13. CHOOSE YOUR CHAMPION
    ===================================================================== */
-const Select = { locked: false, reveal: null, timers: [], picks: [0, 1], angles: [0, SELECT_STEP], cheerAt: [-1e9, -1e9], buttons: [[], []], gesture: [null, null], suppress: [false, false], time: 0 };
+const Select = { locked: false, reveal: null, timers: [], picks: [0, 1], angles: [0, SELECT_STEP], cheerAt: [-1e9, -1e9], buttons: [[], []], gesture: [null, null], suppress: [false, false], time: 0, pinkyFlashAt: -1e9 };
 const outlineTmp = makeCanvas(128, 112), outlineGold = makeCanvas(128, 112);
 function buildSelect() {
   for (let p = 0; p < 2; p++) {
@@ -1675,6 +1714,24 @@ function fadeThrough(middle) { // a stepped fade to black and back, like an old 
   const f = $('#fade'); f.classList.add('on');
   setTimeout(() => { middle(); requestAnimationFrame(() => requestAnimationFrame(() => f.classList.remove('on'))); }, 440);
 }
+function revealUnlockedPinky() {
+  if (!PINKY_UNLOCKED || SELECTABLE_AVATARS.includes(4)) return;
+  SELECTABLE_AVATARS.push(4);
+  SELECT_STEP = Math.PI * 2 / SELECTABLE_AVATARS.length;
+  for (let p = 0; p < 2; p++) {
+    const k = 4, stage = $('#carousel' + p);
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'champ';
+    b.setAttribute('aria-label', 'Player ' + (p + 1) + ': ' + CHARACTERS[k].name + '. ' + CHARACTERS[k].desc);
+    const c = makeCanvas(128, 112); b.append(c);
+    b.addEventListener('click', (event) => {
+      if (Select.suppress[p]) { event.preventDefault(); return; }
+      choose(p, SELECTABLE_AVATARS.indexOf(k));
+    });
+    stage.append(b);
+    Select.buttons[p].push({ b, c, x: c.getContext('2d') });
+    Select.angles[p] = Select.picks[p] * SELECT_STEP;
+  }
+}
 function resetSelect() {
   Select.timers.forEach(clearTimeout); Select.timers = []; Select.locked = false; Select.reveal = null;
   ['#champ-name0', '#champ-name1'].forEach((id) => $(id).classList.remove('called')); $('#vs').hidden = true; syncNames();
@@ -1725,6 +1782,11 @@ function renderSelect(dt) {
       b.setAttribute('aria-pressed', String(!G.cpu || p === 0 ? Select.picks[p] === k : false));
       const hidden = p === 1 && G.cpu && Select.reveal === null, cheer = Select.picks[p] === k && (Select.locked || now - Select.cheerAt[p] < 900);
       drawChamp(x, SELECTABLE_AVATARS[k], p, isFront && !hidden, cheer, hidden && true);
+      if (SELECTABLE_AVATARS[k] === 4 && now - Select.pinkyFlashAt < 1900 &&
+          Math.floor((now - Select.pinkyFlashAt) / 180) % 2 === 0) {
+        x.save(); x.globalCompositeOperation = 'source-atop';
+        x.fillStyle = '#fff'; x.fillRect(0, 0, 128, 112); x.restore();
+      }
     });
   }
   const gb = $('#go-ball').getContext('2d'); gb.clearRect(0, 0, 48, 48); drawBall(gb, 24, 24, 24, Math.floor(Select.time / 700) * Math.PI / 2);
@@ -1753,7 +1815,16 @@ function drawChamp(x, k, p, highlight, cheering, mystery) {
 function setScreen(name) {
   G.screen = name; if (G.soundOpen) openSound(false);
   for (const id of ['boot', 'select', 'game', 'celebrate']) $('#' + id).hidden = name !== id;
-  if (name === 'select') { resetSelect(); sizeSelect(); Sound.decode('game'); ['phil', 'kim', 'rose', 'shay', 'bounce', 'versus'].forEach((n) => Sound.decode('voice-' + n)); }
+  if (name === 'select') {
+    revealUnlockedPinky();
+    resetSelect(); sizeSelect(); Sound.decode('game');
+    ['phil', 'kim', 'rose', 'shay', 'bounce', 'versus'].forEach((n) => Sound.decode('voice-' + n));
+    if (PinkyUnlock.pendingReveal) {
+      PinkyUnlock.pendingReveal = false;
+      Select.pinkyFlashAt = performance.now();
+      Sound.say('voice-pinkys');
+    }
+  }
   if (name === 'game') { ['pinky', 'win', 'voice-noodles', 'voice-pinkys', 'voice-wins', 'voice-double-trouble', 'sfx-yeah', 'sfx-miss', 'sfx-family-beep'].forEach((k) => Sound.decode(k)); hud(); }
 }
 function desiredMusic() {
