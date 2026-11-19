@@ -26,11 +26,11 @@ jobs:
           python3 tools/tune_shay_kim_mouths.py
           node --check source/game.js
           python3 tools/build.py
-          test -s index.html
-          grep -q 'SHAY_KIM_MOUTH_TUNE_V1' index.html
-          grep -q 'PINKY_ISO_SHADOW_CALIBRATED_V1' index.html
-          grep -q 'CURBS_VICTORY_AUDIO_FLOW_V1' index.html
-          grep -q 'PINKYS_KEYBOARD_SECRET_V2' index.html
+          test -s dist/index.html
+          grep -q 'SHAY_KIM_MOUTH_TUNE_V1' dist/index.html
+          grep -q 'PINKY_ISO_SHADOW_CALIBRATED_V1' dist/index.html
+          grep -q 'CURBS_VICTORY_AUDIO_FLOW_V1' dist/index.html
+          grep -q 'PINKYS_KEYBOARD_SECRET_V2' dist/index.html
       - name: Commit updated game
         run: |
           set -euo pipefail

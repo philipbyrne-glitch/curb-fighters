@@ -69,7 +69,7 @@ const Rules = {
 
 /* =====================================================================
    2. AUDIO — one Web Audio graph: master → (music bus, sfx bus).
-   Music is decoded from the embedded MP3s and looped sample-accurately.
+   Music is decoded from the original MP3s and looped sample-accurately.
    ===================================================================== */
 const Sound = (() => {
   const AC = window.AudioContext || window.webkitAudioContext;
@@ -118,16 +118,19 @@ const Sound = (() => {
   function decode(key) {
     if (buffers[key]) return Promise.resolve(buffers[key]);
     if (pending[key]) return pending[key];
-    const el = document.getElementById('aud-' + key);
-    if (!el || !ensure()) return Promise.resolve(null);
-    pending[key] = new Promise((done) => {
-      try {
-        const bin = atob(el.textContent.trim()), bytes = new Uint8Array(bin.length);
-        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-        el.textContent = '';
-        ctx.decodeAudioData(bytes.buffer, (b) => { buffers[key] = { buffer: b, ...loopPoints(b) }; done(buffers[key]); }, () => done(null));
-      } catch { done(null); }
-    });
+    const source = CF.audio[key];
+    if (!source || !ensure()) return Promise.resolve(null);
+    pending[key] = fetch(source)
+      .then((response) => {
+        if (!response.ok) throw new Error('Audio failed to load: ' + key);
+        return response.arrayBuffer();
+      })
+      .then((bytes) => new Promise((done, fail) => ctx.decodeAudioData(bytes, done, fail)))
+      .then((buffer) => {
+        buffers[key] = { buffer, ...loopPoints(buffer) };
+        return buffers[key];
+      })
+      .catch(() => null);
     return pending[key];
   }
   function position() {
@@ -257,9 +260,9 @@ const Sound = (() => {
     music(key) { if (wanted === key) return; wanted = key; if (key) decode(key); sync(); },
     // A recorded sample (names, chants). Returns false when it hasn't been supplied yet,
     // so the caller can play its synth stand-in instead.
-    has: (key) => !!buffers[key] || !!document.getElementById('aud-' + key),
+    has: (key) => !!buffers[key] || !!CF.audio[key],
     say(key, channel = key) {
-      if (!buffers[key] && !document.getElementById('aud-' + key)) return false;
+      if (!buffers[key] && !CF.audio[key]) return false;
       decode(key).then((e) => {
         if (!e || !running() || !prefs.on || prefs.sfx <= 0) return;
         if (voices[channel]) { try { voices[channel].stop(); } catch { /* done */ } }
@@ -312,10 +315,16 @@ const Sound = (() => {
    3. ARTWORK — pre-rendered at in-game size; composites built here.
    ===================================================================== */
 const IMG = {};
-await Promise.all(Object.entries(CF.img).map(([k, src]) => new Promise((ok, fail) => {
-  const i = new Image(); i.onload = () => { IMG[k] = i; ok(); }; i.onerror = () => fail(new Error('Artwork failed to load: ' + k)); i.src = src;
-})));
-const META = CF.meta, PR = META.props;
+const [META] = await Promise.all([
+  fetch(CF.metaUrl).then((response) => {
+    if (!response.ok) throw new Error('Artwork metadata failed to load');
+    return response.json();
+  }),
+  Promise.all(Object.entries(CF.img).map(([k, src]) => new Promise((ok, fail) => {
+    const i = new Image(); i.onload = () => { IMG[k] = i; ok(); }; i.onerror = () => fail(new Error('Artwork failed to load: ' + k)); i.src = src;
+  }))),
+]);
+const PR = META.props;
 const cellOf = (n) => { const c = makeCanvas(128, 112), cols = META.actors.cols; c.getContext('2d').drawImage(IMG.actors, (n % cols) * 128, Math.floor(n / cols) * 112, 128, 112, 0, 0, 128, 112); c.cell = n; return c; };
 const pickCells = (k) => META.actors.index[k].map(cellOf);
 const copyOf = (src) => { const c = makeCanvas(src.width, src.height); c.getContext('2d').drawImage(src, 0, 0); c.cell = src.cell; return c; };
@@ -1665,7 +1674,7 @@ function setScreen(name) {
   G.screen = name; if (G.soundOpen) openSound(false);
   for (const id of ['boot', 'select', 'game', 'celebrate']) $('#' + id).hidden = name !== id;
   if (name === 'select') { resetSelect(); sizeSelect(); Sound.decode('game'); ['phil', 'kim', 'rose', 'shay', 'bounce', 'versus'].forEach((n) => Sound.decode('voice-' + n)); }
-  if (name === 'game') { ['pinky', 'win', 'voice-noodles', 'voice-pinkys', 'voice-wins', 'voice-double-trouble', 'sfx-yeah'].forEach((k) => Sound.decode(k)); hud(); }
+  if (name === 'game') { ['pinky', 'win', 'voice-noodles', 'voice-pinkys', 'voice-wins', 'voice-double-trouble', 'sfx-yeah', 'sfx-miss', 'sfx-family-beep'].forEach((k) => Sound.decode(k)); hud(); }
 }
 function desiredMusic() {
   if (G.screen === 'boot') return 'intro';

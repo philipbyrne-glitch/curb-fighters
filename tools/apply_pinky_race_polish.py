@@ -4,7 +4,7 @@ Will refuse if anchors drift rather than corrupting source.
 """
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
-game = ROOT/'source/game.js'; css = ROOT/'source/style.css'; html = ROOT/'source/index.html'
+game = ROOT/'source/game.js'; css = ROOT/'source/style.css'; html = ROOT/'index.html'
 assert all(p.is_file() for p in [game,css,html]), 'Run from existing Curb Fighters tools/ folder'
 s=game.read_text(); c=css.read_text(); h=html.read_text()
 if 'PINKY_RACE_POLISH_V1' in s:

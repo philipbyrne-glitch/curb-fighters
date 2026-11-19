@@ -39,8 +39,8 @@ jobs:
           fi
           python3 tools/build.py
           node --check source/game.js
-          test -s index.html
-          grep -q 'CF_DATA' index.html
+          test -s dist/index.html
+          grep -q 'CF_DATA' dist/index.html
           test -s assets/built/cars_spin.png
           test -s assets/built/sfx-family-beep.mp3
 

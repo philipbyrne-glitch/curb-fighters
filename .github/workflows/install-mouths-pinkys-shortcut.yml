@@ -27,12 +27,12 @@ jobs:
           python3 tools/apply_calibrated_mouths_and_pinkys_shortcut.py
           node --check source/game.js
           python3 tools/build.py
-          test -s index.html
-          grep -q 'CURBS_EXACT_CALIBRATED_MOUTHS_V1' index.html
-          grep -q 'PINKYS_KEYBOARD_SECRET_V2' index.html
-          grep -q 'PINKY_ISO_SHADOW_CALIBRATED_V1' index.html
-          grep -q 'CURBS_VICTORY_AUDIO_FLOW_V1' index.html
-          grep -q 'aud-sfx-yeah' index.html
+          test -s dist/index.html
+          grep -q 'CURBS_EXACT_CALIBRATED_MOUTHS_V1' dist/index.html
+          grep -q 'PINKYS_KEYBOARD_SECRET_V2' dist/index.html
+          grep -q 'PINKY_ISO_SHADOW_CALIBRATED_V1' dist/index.html
+          grep -q 'CURBS_VICTORY_AUDIO_FLOW_V1' dist/index.html
+          grep -q '"sfx-yeah":"data:audio/mpeg;base64,' dist/index.html
 
       - name: Commit rebuilt game
         run: |

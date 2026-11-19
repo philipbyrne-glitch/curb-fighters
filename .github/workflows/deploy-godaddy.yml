@@ -22,8 +22,8 @@ jobs:
         run: |
           set -euo pipefail
           python3 tools/build.py
-          test -s index.html
-          grep -q 'CF_DATA' index.html
+          test -s dist/index.html
+          grep -q 'CF_DATA' dist/index.html
 
       - name: Unlock deployment SSH key
         env:
@@ -60,7 +60,7 @@ jobs:
         run: |
           set -euo pipefail
           scp -o BatchMode=yes -o StrictHostKeyChecking=yes -P 22 \
-            index.html qbifp9pmtlju@92.205.11.109:public_html/curbs/curb-fighters/index.html.uploading
+            dist/index.html qbifp9pmtlju@92.205.11.109:public_html/curbs/curb-fighters/index.html.uploading
 
       - name: Publish the new page atomically
         run: |

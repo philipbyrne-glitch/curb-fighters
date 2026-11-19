@@ -1,21 +1,21 @@
 """Play a short match in headless Chromium; exit non-zero on any script error or stuck state."""
 import sys
-from pathlib import Path
+import os
 from playwright.sync_api import sync_playwright
 
-PAGE = (Path(__file__).resolve().parents[1] / 'index.html').as_uri()
+PAGE = sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8765/"
 
 def main():
     errors = []
     with sync_playwright() as p:
-        browser = p.chromium.launch()
+        browser = p.chromium.launch(executable_path=os.environ.get("CURB_CHROMIUM"))
         page = browser.new_page(viewport={'width': 1280, 'height': 720})
         page.on('pageerror', lambda e: errors.append(str(e)))
         page.goto(PAGE)
         page.wait_for_function('window.CurbFighters', timeout=15000)
         page.keyboard.press('k')
         page.click('#go')
-        throw = '(p, a) => { const C = window.CurbFighters; C.G.phase = "aim"; C.G.power = p; C.G.aim = a; C.launch(); }'
+        throw = '([p, a]) => { const C = window.CurbFighters; C.G.phase = "aim"; C.G.power = p; C.G.aim = a; C.launch(); }'
         for power, aim in [(.65, .5), (.5, .5), (.3, .5), (.745, .5)]:
             page.wait_for_function('["ready"].includes(window.CurbFighters.G.phase)', timeout=20000)
             page.wait_for_timeout(2600)  # let any halfway practice bounces finish

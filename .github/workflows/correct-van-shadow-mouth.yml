@@ -26,8 +26,8 @@ jobs:
           python3 tools/apply_shadow_mouth_swap.py
           node --check source/game.js
           python3 tools/build.py
-          test -s index.html
-          grep -q 'CURBS_SHADOW_MOUTH_SWAP_V1' index.html
+          test -s dist/index.html
+          grep -q 'CURBS_SHADOW_MOUTH_SWAP_V1' dist/index.html
       - name: Commit corrected game
         run: |
           set -euo pipefail

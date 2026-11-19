@@ -27,10 +27,10 @@ jobs:
           node --check source/game.js
           python3 tools/build.py
           test -s assets/built/sfx-yeah.mp3
-          test -s index.html
-          grep -q 'CURBS_VICTORY_AUDIO_FLOW_V1' index.html
-          grep -q 'aud-sfx-yeah' index.html
-          grep -q 'vs-center-zoom' index.html
+          test -s dist/index.html
+          grep -q 'CURBS_VICTORY_AUDIO_FLOW_V1' dist/index.html
+          grep -q '"sfx-yeah":"data:audio/mpeg;base64,' dist/index.html
+          grep -q 'vs-center-zoom' dist/index.html
       - name: Commit updated game
         run: |
           set -euo pipefail
