@@ -6,6 +6,6 @@ window.CF_EXCLAMATIONS = {
   near: ['SO CLOSE!'],
   short: ['WEAK SAUCE!', 'NOT ENOUGH!'],
   long: ['TOO MUCH POWER!'],
-  left: ['D'OH!'],
+  left: ["D'OH!"],
   right: ['OOF!']
 };
