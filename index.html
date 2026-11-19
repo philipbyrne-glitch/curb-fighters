@@ -2,6 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<script>
+  // Keep both Cloudflare Pages domains on one deployment, with separate rosters.
+  if (location.hostname.toLowerCase() === 'curb-fighters.philb.ie') {
+    location.replace('/index2.html' + location.search + location.hash);
+  }
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#18254e">
 <meta name="description" content="Curb Fighters: a two-player pixel street game of curbs starring Phil, Kim, Rose and Shay.">
