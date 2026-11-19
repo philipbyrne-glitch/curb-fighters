@@ -101,7 +101,7 @@ const Sound = (() => {
   // Phil's balance from the sound desk (tools/mixer.html). 1 = as designed; anything unlisted is 1.
   const MIX = {
     intro: 0.2, select: 0.2, game: 0.2, pinky: 0.2, win: 0.2,
-    'voice-phil': 0.4, 'voice-kim': 0.4, 'voice-rose': 0.4, 'voice-shay': 0.4, 'voice-bounce': 0.4, 'voice-versus': 0.4, 'voice-pinkys': 0.4, 'voice-noodles': 0.4, 'sfx-miss': 0.35, 'sfx-family-beep': 0.26, 'sfx-yeah': 0.55,
+    'voice-curbfighters': 0.4, 'voice-phil': 0.4, 'voice-kim': 0.4, 'voice-rose': 0.4, 'voice-shay': 0.4, 'voice-bounce': 0.4, 'voice-versus': 0.4, 'voice-pinkys': 0.4, 'voice-noodles': 0.4, 'sfx-miss': 0.35, 'sfx-family-beep': 0.26, 'sfx-yeah': 0.55,
     throw: 2, curb: 1.65, bounce: 2, bop: 2, catch: 1.9, hit: 1.25, double: 1.25, fanfare: 1.25, noodle: 2, surprise: 1.15, horn: 1.45, car: 1.25, van: 1.9, screech: 1, raceAway: 1.55, munch: 2, countdown: 1.75, go: 1.3, tick: 1, lock: 1,
   };
   const level = (name) => (MIX[name] ?? 1);
@@ -1700,7 +1700,7 @@ function desiredMusic() {
   }
   return null;
 }
-function bootStart() { if (G.screen !== 'boot' || !booted) return; Sound.unlock(); Sound.sfx('go'); setScreen('select'); }
+function bootStart() { if (G.screen !== 'boot' || !booted) return; Sound.unlock(); Sound.say('voice-curbfighters', 'title'); Sound.sfx('go'); setScreen('select'); }
 let booted = false;
 $('#boot').addEventListener('click', (e) => { if (e.target.closest('#audio-panel')) return; bootStart(); });
 $('#celebrate').addEventListener('pointerdown', (e) => { G.lastInput = e.pointerType === 'mouse' ? 'mouse' : 'touch'; $('#cele-prompt').textContent = G.lastInput === 'touch' ? 'TAP TO PLAY AGAIN' : 'CLICK OR PRESS ANY KEY'; leaveCelebration(); });
@@ -1766,7 +1766,7 @@ function frame(now) {
 
 // Fonts first, so canvas lettering is never drawn in a fallback face.
 try { await Promise.race([Promise.all(['19px "CF Arcade"', '19px "Press Start 2P"', '21px "CF Pixel"'].map((f) => document.fonts.load(f).catch(() => null))), new Promise((r) => setTimeout(r, 2500))]); } catch { /* fallbacks */ }
-buildSelect(); syncSoundButton(); Sound.init(); Sound.decode('intro'); Sound.decode('select');
+buildSelect(); syncSoundButton(); Sound.init(); Sound.decode('intro'); Sound.decode('select'); Sound.decode('voice-curbfighters');
 booted = true;
 const prompt = $('#boot-prompt'); prompt.textContent = COARSE ? 'TAP TO START' : 'HIT ANY KEY TO START'; prompt.classList.add('ready');
 $('#boot').focus({ preventScroll: true });
