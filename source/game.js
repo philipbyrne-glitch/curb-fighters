@@ -1642,7 +1642,7 @@ function renderSelect(dt) {
       const isFront = front > .92;
       b.style.left = (cx + side * 25 + (1 - front) * skew) + '%';
       b.style.top = rowPct(346 + depth * 58) + '%';
-      b.style.transform = 'translate(-50%, -89.3%) scale(' + (1 + depth * .38).toFixed(3) + ')';
+      b.style.transform = 'translate(calc(-50% + ' + (THREE_CHARACTER_VERSION && Select.picks[p] === k ? (p === 0 ? 15 : -15) : 0) + 'px), -89.3%) scale(' + (1 + depth * .38).toFixed(3) + ')';
       b.style.zIndex = String(10 + Math.round(depth * 20));
       b.style.filter = isFront ? 'none' : 'brightness(' + (.84 + depth * .16).toFixed(2) + ')';
       b.setAttribute('aria-pressed', String(!G.cpu || p === 0 ? Select.picks[p] === k : false));
