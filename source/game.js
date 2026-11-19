@@ -1054,7 +1054,7 @@ function renderCelebrate(dt) {
   drawChant(c, vx + V.face[0], vy + V.face[1], vy, CELE_CHANTS[Math.floor(t / 1500) % CELE_CHANTS.length], t, true);
   // the family on the road, everyone celebrating, the winner lifting the golden ball
   const winAv = G.avatars[Cele.winner], others = SELECTABLE_AVATARS.filter((k) => k !== winAv);
-  (others.length === 3 ? [165, 295, 652] : [120, 230, 605, 715]).forEach((x, k) => {
+  (others.length === 2 ? [215, 652] : others.length === 3 ? [165, 295, 652] : [120, 230, 605, 715]).forEach((x, k) => {
     const av = others[k], arms = Math.floor((t + k * 450) / 900) % 2 === 0;
     shade(x, 452, 26);
     drawCharacter(c, x, 452, av, { scale: 3.6, arms, punch: !arms, time: t + k * 130, jump: hop(k + 4, 3), flip: x > 418 });
