@@ -4,7 +4,7 @@ window.CF_EXCLAMATIONS = {
   hit: ['LOVELY CURB!', 'YES!', 'GET IN!', 'TEXTBOOK!', 'NOICE!', 'CLASSIC!'],
   streak: ['KEEP IT GOING!'],
   near: ['SO CLOSE!'],
-  short: ['NOT ENOUGH!'],
+  short: ['WEAK SAUCE!', 'NOT ENOUGH!'],
   long: ['TOO MUCH POWER!'],
   left: ['D'OH!'],
   right: ['OOF!']
