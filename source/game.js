@@ -364,7 +364,7 @@ const pinkyFrame = (n) => {
   const bounds = [[13,16,30,52], [13,17,27,50], [8,18,36,50],
                   [11,16,34,51], [16,22,28,46]][n];
   c.drawImage(pinkyPoseStrip, n * 56 + bounds[0], bounds[1],
-    bounds[2], bounds[3], 24, 4, 80, 96);
+    bounds[2], bounds[3], 33, 24, 62, 76);
   frame.cell = 'pinky';
   return frame;
 };
